@@ -1,0 +1,305 @@
+\documentclass{article}
+\usepackage{amsmath,amssymb}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{1-dimansional maps}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{Quadra}
+\subsection*{A simple polynomial map}
+The map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+z'&=z^2+c
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $c$ is a parameter.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{Bernoulli2}
+\subsection*{Bernoulli map}
+The Beroulli map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+x'&=
+\begin{cases}
+\frac{x}{p}&(0<x<p)\\
+\frac{x-p}{1-p}&(p<x<1)
+\end{cases},
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $0<p<1$ is a parameter.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{BernoulliK}
+\subsection*{$k$-symbol Bernoulli map}
+The $k$-symbol Beroulli map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+x'&=
+\begin{cases}
+(x-S_{0})/p_1&
+(S_{0}<x<S_{1})\\
+&\vdots\\
+(x-S_{k-1})/p_k&
+(S_{k-1}<x<S_{k})
+\end{cases},
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $0<p_i<1$ is a parameter and $ S_{s}=\sum_{i=1}^{s}p_i$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{PomeauManneville}
+\subsection*{Pomeau Manneville map}
+The Pomeau Manneville intermittent map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+x'&=
+\begin{cases}
+x\left( 1+\frac{1-p}{p^{b+1}}x^b\right) & (0<x<p)\\
+\frac{x-p}{1-p}&(p<x<1)
+\end{cases},
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $0<p<1$ and $b>0$ are parameters.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{ModifiedBernoulli}
+\subsection*{Modified Bernoulli map}
+The modified Bernoulli map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+x'&=
+\begin{cases}
+x\left( 1+\frac{1-p}{p^{b+1}}x^b \right) & (0<x<p)\\
+1-(1-x) \left( 1+ \frac{p}{ (1-p)^{b+1} }(1-x)^b\right) & (p<x<1)
+\end{cases},
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $0<p<1$ and $b>0$ are parameters.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{ModifiedBernoulliAsym}
+\subsection*{Modified Bernoulli map}
+The asymmetric modified Bernoulli map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+x'&=
+\begin{cases}
+x\left( 1+\frac{1-p}{p^{b_0+1}}x^{b_0} \right) & (0<x<p)\\
+1-(1-x) \left( 1+\frac{p}{(1-p)^{b_1+1}}(1-x)^{b_1}\right) & (p<x<1)
+\end{cases},
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $0<p<1$ and $b_0,b_1>0$ are parameters.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{2-dimansional maps}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{StandardMap}
+\subsection*{Standard map}
+The standard map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+p'&=p-\frac{k}{2\pi}\sin(2\pi q),\\
+q'&=q+p'\mod 1,
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $k$ is a parameter.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{PiecewiseLinearStandard}
+\subsection*{Piecewise linear map}
+The map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+p'&=p-k S_{\rm pwl}(q),\\
+q'&=q+p'\mod 1,
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $k$ is a parameter and $S_{\rm pwl}(q)$ is a piecewise linear function,
+%%%%%%%%%%%%%%%%
+\begin{align*}
+S_{\rm pwl}(q)=
+\begin{cases}
+x&(0<x<1/4)\\
+1/2-x&(1/4<x<3/4)\\
+x-1&(3/4<x<1)
+\end{cases}.
+\end{align*}
+%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{SharpenStandard}
+\subsection*{Sharpen standard map}
+The map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+p'&=p-k S^{(1)}_{e}(q),\\
+q'&=q+p'\mod 1,
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $k$ is a parameter and $S^{(1)}_{e}(q)$ is defined, for $0<e<1$, as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+S^{(1)}_{e}(q)=
+\frac{1}{2\pi e}\sin^{-1}(e\sin(2\pi q)).
+\end{align*}
+%%%%%%%%%%%%%%%%
+Note that $\displaystyle \lim_{e\to 0}S^{(1)}_{e}(q)= \frac{1}{2\pi}\sin(2\pi) q$ and $\displaystyle \lim_{e\to 1}S^{(1)}_{e}(q)=S_{\rm pwl}(q)$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{TruncatedStandard}
+\subsection*{Truncated standard map}
+The map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+p'&=p-k S^{(2)}_{n}(q),\\
+q'&=q+p'\mod 1,
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $k$ is a parameter and $S^{(2)}_{n}(q)$ is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+S^{(2)}_{n}(q)=
+\frac{1}{2\pi}\sum_{k=0}^{n}\frac{(2k-1)!!}{(2k)!!(2k+1)}\sin^{2k+1}(2\pi q).
+\end{align*}
+%%%%%%%%%%%%%%%%
+Note that $\displaystyle \lim_{n\to \infty}S^{(2)}_{n}(q)=S_{\rm pwl}(q)$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{QuadraticStandard}
+\subsection*{Quadratic standard map}
+The map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+p'&=p-k S^{(3)}(q),\\
+q'&=q+p'\mod 1,
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $k$ is a parameter and $S^{(3)}(q)$ is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+S^{(3)}(q)=
+\begin{cases}
+-2(x-1/4)^2+1/8&(0<x<1/2)\\
+ 2(x-3/4)^2-1/8&(1/2<x<1)
+\end{cases}
+.
+\end{align*}
+%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{NQuadraticStandard}
+\subsection*{$N$-th order quadratic standard map}
+The map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+p'&=p-k S^{(4)}_{n}(q),\\
+q'&=q+p'\mod 1,
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $k$ is a parameter and $S^{(3)}(q)$ is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+S^{(4)}_{n}(q)=
+\begin{cases}
+-2^{(4n-3)/n} (x-1/4)^{2n}+1/8n&(0<x<1/2)\\
+2^{(4n-3)/n} (x-3/4)^{2n}-1/8n&(1/2<x<1)
+\end{cases}
+.
+\end{align*}
+%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{KeplerMap}
+\subsection*{Kepler map}
+The Kepler map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+E'&=E+\frac{k}{2\pi}\sin(2\pi \varphi),\\
+\varphi'&=\varphi-aE'^{-3/2}\mod 1,
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $k$ and $a$ are parameters.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{KeplerGeneral}
+\subsection*{Generalized Kepler map}
+The Kepler map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+E'&=E+\frac{k}{2\pi}\sin(2\pi \varphi),\\
+\varphi'&=\varphi-aE'^{-p}\mod 1,
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $k$, $a$ and $p$ are parameters.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{BakerMap}
+\subsection*{Baker map}
+The baker map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+\begin{pmatrix}
+x'\\y'
+\end{pmatrix}
+=
+\begin{cases}
+\begin{pmatrix}
+2x\\y/2
+\end{pmatrix}
+&(0<x<1/2)\\
+\begin{pmatrix}
+2x-1\\y/2+1/2
+\end{pmatrix}
+&(1/2<x<1)
+\end{cases}.
+\end{align*}
+%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{HenonMap}
+\subsection*{Henon map}
+The H\'enon map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+x'&=b-ay-x^2,\\
+y'&=x,
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $a$ and $b$ are parameters.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{4-dimansional maps}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\HTMLsetenv{HTML_FILE_NAME}{FroeschleMap}
+\subsection*{Froeschle map}
+The Fro\'eschle map is defined as
+%%%%%%%%%%%%%%%%
+\begin{align*}
+p_1'&=p_1-\frac{k_1}{2\pi}\sin(2\pi q_1)+\frac{l}{2\pi}\sin(2\pi (q_1-q2)),\\
+q_1'&=q_1+p_1'\mod 1,\\
+p_2'&=p_2-\frac{k_2}{2\pi}\sin(2\pi q_2)-\frac{l}{2\pi}\sin(2\pi (q_1-q2)),\\
+q_2'&=q_2+p_2'\mod 1,
+\end{align*}
+%%%%%%%%%%%%%%%%
+where $k_1$, $k_2$ and $l$ are parameters.
+
+\end{document}
+%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
