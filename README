@@ -1,0 +1,15 @@
+=============================
+OnSight (Pre-alpha version)
+=============================
+ 
+OnSight supports for analysis of classical, complex, or quantum mapping system.
+
+OnSight is a wxPython Application.
+It supposes to run python2.x series and Max OS 10.6 or later and major Unix/Linux platforms.
+
+Prerequisites.
+1.python
+2.scipy
+3.numpy
+4.matplotlib
+5.wx
