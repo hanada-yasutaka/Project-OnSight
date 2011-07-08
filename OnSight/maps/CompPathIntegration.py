@@ -24,14 +24,14 @@ def _fModC(x,y):
 
 class Mset(Space):
     def __init__(self, map):
-        map.isComplex = True
-        map.Psetting =[(False,0.0),(False,0.0)]
+        map.isComplex = True  
+        map.Psetting =[(False,0.0),(False,0.0)] 
         Space.__init__(self, map.dim, map.isComplex)
         self.map = map
         self.mset_data = numpy.array([])
         self.point = Point(map.dim,map.isComplex)
         self.ms = MapSystem(self.map)    
-    def mset(self, p, iter, grid, xmin=0.0, xmax=1.0, ymin=-1.0, ymax=1.0, yShift=True):
+    def mset(self, p, iter, grid, xmin=0.0, xmax=1.0, ymin=-0.5, ymax=0.5, yShift=True):
         p = numpy.array([p+0.j for i in range(grid)])
         x = numpy.arange(xmin, xmax, (xmax - xmin)/grid)
         y = numpy.arange(ymin, ymax, (ymax - ymin)/grid)
@@ -40,6 +40,7 @@ class Mset(Space):
         else:
             #todo 
             self.get_sign_inversion(iter, p, x, y, grid)
+
     def get_sign_inversion(self, iter, p, x, y, grid):
         for dy in y:
             iy = numpy.array([dy for i in range(grid) ])
@@ -56,7 +57,6 @@ class Mset(Space):
     def evolves(self, q, p, iter):
         point = Point(self.map.dim, self.map.isComplex, [q,p])
         self.ms.setInit(point)
-#        self.ms.setPeriodic(None)
         self.ms.setMaxImag(None)
         self.ms.evolves(iter)
         return self.ms.P.data
@@ -66,7 +66,9 @@ class Mset(Space):
         x2 = numpy.insert(x,len(x),0.0)
         return numpy.where(x1*x2 < 0)[0]
     def get_mset(self):
-        return self.mset_datax, self.mset_datay
+        return self.mset_data.real, self.mset_data.imag
+    def test(self):
+        print 'test'
     
 class BranchSearch(object):
     def __init__(self, map, p, iter, isTest=False):
@@ -107,8 +109,8 @@ class BranchSearch(object):
     def get_branch(self, x1, x2, sample=100, r = 0.0001, sample_max=1e6):
         y = self.p + 0.0j
         iter = self.iter
-        if self.isTest:
-            r ,sample, sample_max = 0.005, 100, 1e5
+        #if self.isTest:
+        #    r ,sample, sample_max = 0.005, 100, 1e5
         point0 = self.bisection(x1, x2, y, iter, 1e-10)
         point1 = self.get_branch_section(x1, x2, y, iter, point0, r, 2)
 
@@ -202,17 +204,24 @@ class BranchSearch(object):
     def where_sign_inversion(self,x, y, iter):
         data = self.evovles(x, y, iter)
         return self.mset.where_sign_inversion(data[1].imag)
+    def get_mset(self, xi_min, xi_max, eta_min, eta_max, grid):
+        mset = Mset(self.map)
+        mset.mset(self.p, self.iter, grid, xi_min, xi_max, eta_min, eta_max)
+        return mset.get_mset()
 
 class Branch(object):
     pass
-class CompClAnalysis(object):
-    def __init__(self, map):
+class CompPathIntegration(object):
+    def __init__(self, map, p, iter, isTest=False):
         map.isComplex = True
+        self.map = map
+        self.p = p
+        self.iter = iter
+        self.isTest=isTest
         
     def get_lset(self):
         pass
-    def get_mset(self):
-        pass
+
     def get_action(self):
         pass
     def branch_pruning(self):
@@ -221,4 +230,10 @@ class CompClAnalysis(object):
         pass
     def diffirence(self):
         pass
-        
+
+if __name__ == '__main__':
+    from MapSystem import *
+    map = ShudoStandard()
+    cpi = CompPathIntegration(map, 0.0, 6)
+    cpi.get_mset(0.0, 1.0, -0.5, 0.5,100)
+    

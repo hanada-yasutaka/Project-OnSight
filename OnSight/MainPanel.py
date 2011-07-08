@@ -21,16 +21,17 @@ from PoincarePlotPanel import PoincarePlotPanel
 from RecurrenceTimePanel import RecurrenceTimePanel
 from SurvivalTimePanel import SurvivalTimePanel
 from HittingTimePanel import HittingTimePanel
-
+from MsetPanel import MsetPanel
 panels={
 	'Poincare Plot':PoincarePlotPanel,
 	'Recurrence Time':RecurrenceTimePanel,
 	'Survival Time':SurvivalTimePanel,
-	'Hitting Time':HittingTimePanel
+	'Hitting Time':HittingTimePanel,
+	'Mset':MsetPanel
 }
 
 class MainPanel(wx.Notebook):
-	def __init__(self,parent):
+	def __init__(self,parent): 
 		wx.Notebook.__init__(self,parent,-1)
 		self.parent=parent
 		
