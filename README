@@ -1,4 +1,3 @@
-=============================
 OnSight (Pre-alpha version)
 =============================
 
@@ -17,7 +16,7 @@ OnSight is a GUI-based application which helps to analyse and manipulate
 several mapping systems in terms of theory of dynamical systems. OnSight 
 supports classical, complex, and quantum mappings.
 
-### System prerequisites
+### System Requirements
 
 OnSight is a wxPython Application.
 It supposes to run python2.x series and Max OS 10.6 or later and major Unix/Linux platforms.
