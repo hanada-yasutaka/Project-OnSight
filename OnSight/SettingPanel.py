@@ -11,25 +11,6 @@ sliderValue=0
 
 choiceSize=(80, -1)
 
-class NumericValidator(wx.PyValidator):
-	def __init__(self):
-		wx.PyValidator.__init__(self)
-		self.Bind(wx.EVT_CHAR, self.OnChar)
-		
-	def Clone(self):
-		return NumericValidator()
-		
-	def OnChar(self,event):
-		key = event.GetKeyCode()
-		if key < wx.WXK_SPACE or key == wx.WXK_DELETE or key > 255:
-			event.Skip()
-			return
-		
-		if chr(key) in string.digits+'.'+'-':
-			event.Skip()
-			return
-		return
-
 class ParameterPanel(wx.Panel):
 	def __init__(self,parent,mapsystem):
 		wx.Panel.__init__(self,parent,-1)
@@ -101,7 +82,7 @@ class ParameterPanel(wx.Panel):
 			
 			inputId=wx.NewId()
 			self.inputIds.append(inputId)
-			input=wx.TextCtrl(self,inputId,value=str(self.Para.para[i]),size=(200,-1),style=wx.TE_RIGHT,validator=NumericValidator())
+			input=wx.TextCtrl(self,inputId,value=str(self.Para.para[i]),size=(200,-1),style=wx.TE_RIGHT,validator=Utils.NumericValidator())
 			self.inputs.append(input)
 			self.Bind(wx.EVT_TEXT,self.OnInput,input)
 			
@@ -189,7 +170,7 @@ class BoundaryConditionPanel(wx.Panel):
 			
 			periodId=wx.NewId()
 			self.periodIds.append(periodId)
-			period=wx.TextCtrl(self,periodId,value='',size=(40,-1),style=wx.TE_RIGHT,validator=NumericValidator())
+			period=wx.TextCtrl(self,periodId,value='',size=(40,-1),style=wx.TE_RIGHT,validator=Utils.NumericValidator())
 			self.periods.append(period)
 			
 			periodsizer=wx.BoxSizer(wx.HORIZONTAL)
@@ -209,7 +190,7 @@ class BoundaryConditionPanel(wx.Panel):
 				
 				boundId=wx.NewId()
 				self.boundIds.append(boundId)
-				bound=wx.TextCtrl(self,boundId,value='',size=(40,-1),style=wx.TE_RIGHT,validator=NumericValidator())
+				bound=wx.TextCtrl(self,boundId,value='',size=(40,-1),style=wx.TE_RIGHT,validator=Utils.NumericValidator())
 				self.bounds.append(bound)
 				boundsizer.Add(bound,0,wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 			
