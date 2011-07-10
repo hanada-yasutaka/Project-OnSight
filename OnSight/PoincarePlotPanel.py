@@ -76,13 +76,15 @@ class PoincarePlotPanel(_SubPanel):
 			self.iteration= self.iteration+1
 			wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration').SetValue(self.iteration)
 			OnButtonDraw(event)
-			
+		def OnButtonSet(event):
+			print self.type
 			
 		self.Bind(wx.EVT_SPINCTRL, OnSpinCtrlSample, wx.xrc.XRCCTRL(self.panel,'SpinCtrlSample'))
 		self.Bind(wx.EVT_SPINCTRL, OnSpinCtrlIteration, wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration'))
 		self.Bind(wx.EVT_RADIOBOX, OnRadioBoxType, wx.xrc.XRCCTRL(self.panel,'RadioBoxType'))
 		self.Bind(wx.EVT_RADIOBOX, OnRadioBoxRandom, wx.xrc.XRCCTRL(self.panel,'RadioBoxRandom'))
 		self.Bind(wx.EVT_CHECKBOX, OnCheckBoxTrajectory, wx.xrc.XRCCTRL(self.panel,'CheckBoxTrajectory'))
+		self.Bind(wx.EVT_BUTTON, OnButtonSet, wx.xrc.XRCCTRL(self.panel,'ButtonSet'))
 		self.Bind(wx.EVT_BUTTON, OnButtonPrev, wx.xrc.XRCCTRL(self.panel,'ButtonPrev'))
 		self.Bind(wx.EVT_BUTTON, OnButtonNext, wx.xrc.XRCCTRL(self.panel,'ButtonNext'))
 		self.Bind(wx.EVT_BUTTON, OnButtonDraw, wx.xrc.XRCCTRL(self.panel,'ButtonDraw'))
