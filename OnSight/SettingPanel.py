@@ -315,6 +315,8 @@ class SettingPanel(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self,parent):
 		wx.lib.scrolledpanel.ScrolledPanel.__init__(self,parent,-1)
 		
+		self.SetupScrolling()
+		
 		self.pPanel=ParameterPanel(self,parent.mapsystem)
 		self.bPanel=BoundaryConditionPanel(self,parent.mapsystem)
 		
