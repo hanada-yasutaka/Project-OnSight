@@ -35,20 +35,22 @@ class MsetPanel(_SubPanel):
 
         self.checkedbranchonly = False
         
-        wx.xrc.XRCCTRL(self.panel,'StaticTextPreference').SetLabel('Preference: iteration=%d p_0 = %.2f' % (self.iteration,self.initial_p))
+        wx.xrc.XRCCTRL(self.panel,'StaticTextPreference').SetLabel('Preference: iteration=%d, p_0 = %.2f' % (self.iteration,self.initial_p))
 
         
+        ### Event methods
+        # general notebook
 
-        def EvtCheckListBox(event):
-            index = event.GetSelection()
-            label = self.checklistbranch.GetString(index)
-            print index, label
+        def OnApply(event):
+            self.Initialization()
+            self.GetMset()
+            self.DrawMset()
+            self.plotpanel.draw()
         def OnSpinCtrlIteration(event):
-            self.iteration = event.GetInt()
-            print event.GetInt() # for debug
-        def OnTextCtrlInital_p(event):
+            self.iteration = wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration').GetValue()
+        def OnTextCtrlInitial_p(event):
             self.initial_p = float(wx.xrc.XRCCTRL(self.panel,'TextCtrlInital_p').GetValue())
-            print self.initial_p # for debug
+
         def OnDrawMset(event):
             self.GetMset()
             self.DrawMset()
@@ -67,6 +69,11 @@ class MsetPanel(_SubPanel):
                 self.plotpanel.plot(self.mset_data[0],self.mset_data[1],',k')
                 self.BranchDraw()
             self.plotpanel.draw()
+        # branch data notebook
+        def EvtCheckListBox(event):
+            index = event.GetSelection()
+            label = self.checklistbranch.GetString(index)
+            print index, label, self.checklistbranch.IsChecked(index)
         def OnCheckListBranch(event):
             pass
         def OnSearch(event):
@@ -84,20 +91,25 @@ class MsetPanel(_SubPanel):
             print 'Hello',self.checklistbranch 
             print self.checklistbranch.GetCheckedStrings()
                                     
-        self.checklistbranch = wx.xrc.XRCCTRL(self.panel, 'CheckListBranch')
-        self.Bind(wx.EVT_CHECKLISTBOX, EvtCheckListBox, self.checklistbranch)
+
+        ### General notebook
+        
         
         if wx.Platform != '__WXMAC__':
             self.Bind(wx.EVT_SPINCTRL,OnSpinCtrlIteration, wx.xrc.XRCCTRL(self.panel, 'SpinCtrlIteration'))
         else:
-           self.Bind(wx.EVT_TEXT, OnSpinCtrlIteration, wx.xrc.XRCCTRL(self.panel, 'SpinCtrlIteration'))
-        self.Bind(wx.EVT_TEXT,OnSpinCtrlIteration, wx.xrc.XRCCTRL(self.panel, 'SpinCtrlIteration'))
-        self.Bind(wx.EVT_TEXT_ENTER, OnTextCtrlInital_p,  wx.xrc.XRCCTRL(self.panel, 'TextCtrlInital_p'))
-        self.Bind(wx.EVT_BUTTON, OnDrawMset, wx.xrc.XRCCTRL(self.panel,'DrawMset'))
+            self.Bind(wx.EVT_TEXT, OnSpinCtrlIteration, wx.xrc.XRCCTRL(self.panel, 'SpinCtrlIteration'))
+        self.Bind(wx.EVT_TEXT_ENTER, OnTextCtrlInitial_p,  wx.xrc.XRCCTRL(self.panel, 'TextCtrlInital_p'))
+        self.Bind(wx.EVT_BUTTON, OnApply, wx.xrc.XRCCTRL(self.panel, 'ButtonApply')) 
+        self.Bind(wx.EVT_BUTTON, OnDrawMset, wx.xrc.XRCCTRL(self.panel,'ButtonDrawMset'))
         self.Bind(wx.EVT_RADIOBOX, OnRadioBoxBranch, wx.xrc.XRCCTRL(self.panel,'RadioBoxBranch'))
-        self.Bind(wx.EVT_BUTTON, OnGetRealBranch, wx.xrc.XRCCTRL(self.panel, 'GetRealBranch'))
+        
+        ### Branch Data notebook
+        self.checklistbranch = wx.xrc.XRCCTRL(self.panel, 'CheckListBranch')
+        self.Bind(wx.EVT_CHECKLISTBOX, EvtCheckListBox, self.checklistbranch)
+        self.Bind(wx.EVT_BUTTON, OnGetRealBranch, wx.xrc.XRCCTRL(self.panel, 'ButtonGetRealBranch'))
         self.Bind(wx.EVT_CHECKBOX, OnCheckBoxBranchOnly, wx.xrc.XRCCTRL(self.panel, 'CheckBoxBranchOnly'))
-        self.Bind(wx.EVT_BUTTON, OnSearch, wx.xrc.XRCCTRL(self.panel, 'ButtonSearch'))
+      #  self.Bind(wx.EVT_BUTTON, OnSearch, wx.xrc.XRCCTRL(self.panel, 'ButtonSearch'))
         self.Bind(wx.EVT_BUTTON, OnDeleteBranch, wx.xrc.XRCCTRL(self.panel, 'ButtonDeleteBranch'))
         
 
@@ -147,6 +159,12 @@ class MsetPanel(_SubPanel):
             self.plotpanel.axes.annotate('%d' % (i) , xy=(data[len(data)/2].real, data[len(data)/2].imag),  xycoords='data',
                                          xytext=(-20, 20), textcoords='offset points', arrowprops=dict(arrowstyle="->"))
             self.plotpanel.replot(data.real, data.imag,'.', markersize=10)
+    def Initialization(self):
+        self.branchsearch = maps.CompPathIntegration.BranchSearch(self.map, self.initial_p, self.iteration)            
+        self.q1 = None
+        self.Reserve = []
+        self.checkedbranchonly = False
+        wx.xrc.XRCCTRL(self.panel,'StaticTextPreference').SetLabel('Preference: iteration=%d, p_0 = %.2f' % (self.iteration,self.initial_p))
+        
 
-                
 
