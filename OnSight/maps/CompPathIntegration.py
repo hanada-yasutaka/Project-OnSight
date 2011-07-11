@@ -71,19 +71,22 @@ class Mset(Space):
         print 'test'
     
 class BranchSearch(object):
-    def __init__(self, map, p, iter, isTest=False):
+    def __init__(self, map, p, iter):
         if type(iter) != int or iter <= 0 : raise ValueError, 'iter > 0 and integer'
         map.isComplex = True        
         self.map = map
-        self.isTest=isTest
         self.iter = iter
-        self.p = p
+        self.p = p + 0.0j
         self.mset = Mset(self.map)
         
-        self.branch = numpy.array([]) # for branch coordinate
-        self.worming_data = []             # for test
+        self.worm_start_point = []
+        self.branches = [] # for branch coordinate
+        self.worming_data = []  
         self.lset = numpy.array([])   # for lset
         self.action = numpy.array([]) # for action
+    def get_realbranch(self, sample=500):
+        x = numpy.arange(0.0, 1.0, 1.0/sample) + 0.0j
+        self.branches.insert(0,x)
     def get_lset(self):
         lset = self.mset.evolves(self.branch, self.iter)
         self.lset = numpy.array([],lset)
@@ -99,31 +102,41 @@ class BranchSearch(object):
         pylab.plot(S.imag)
         pylab.show()
         
-        #self.map.ifunc0(self.branch)
-        #self.map.ifunc1(self.p)
-        pass
     def save_branch(self):
         self.get_lset()
         self.get_action()
         pass
-    def get_branch(self, x1, x2, sample=100, r = 0.0001, sample_max=1e6):
-        y = self.p + 0.0j
-        iter = self.iter
-        #if self.isTest:
-        #    r ,sample, sample_max = 0.005, 100, 1e5
-        point0 = self.bisection(x1, x2, y, iter, 1e-10)
-        point1 = self.get_branch_section(x1, x2, y, iter, point0, r, 2)
+    def search_neary_branch(self, x, r=1e-4,isTest=False):
+        while True:
+            circle = self.make_circle(x,r)
+            index = self.where_sign_inversion(circle, self.p, self.iter)
+            if len(index) == 0: r = 3.0*r
+            elif len(index) > 2: r = 0.5*r
+            else: break
+        section = self.bisection(circle[index[0]-1], circle[index[0]], self.p, self.iter)
+        self.worm_start_point.append(section)
+        self.get_branch(section, isTest=isTest)
+        
+    def get_branch(self, start_point, sample=100, r = 0.0001, sample_max=1e6, isTest=False):
+        self.isTest=isTest
+        branch = numpy.array([])
 
-        branch0 = self.worming(point0, point1[1], point1[0][0], point1[1], y, iter,sample, sample_max)
-        branch1 = self.worming(point0, point1[1], point1[0][1], point1[1], y, iter,sample, sample_max)
-        self.branch = numpy.append(self.branch, branch0[::-1]) # append in the inverse order
-        self.branch = numpy.append(self.branch, point1[0][0])  
-        self.branch = numpy.append(self.branch, point0)         # initial bisection point
-        self.branch = numpy.append(self.branch, point1[0][1]) # append in the order
-        self.branch = numpy.append(self.branch, branch1)
+        if self.isTest:
+            r ,sample, sample_max = 0.005, 100, 1e4
+        
+        point1 = self.get_branch_section(self.p, self.iter, start_point, r, 2)
+
+        branch0 = self.worming(start_point, point1[1], point1[0][0], point1[1], self.p, self.iter, sample, sample_max)
+        branch1 = self.worming(start_point, point1[1], point1[0][1], point1[1], self.p, self.iter, sample, sample_max)
+        branch = numpy.append(branch, branch0[::-1]) # append in the inverse order
+        branch = numpy.append(branch, point1[0][0])  
+        branch = numpy.append(branch, start_point)         # initial bisection point
+        branch = numpy.append(branch, point1[0][1]) # append in the order
+        branch = numpy.append(branch, branch1)
+        self.branches.append(branch)
 
     def worming(self, p1, r1, p2, r2, y, iter,sample,sample_max):
-        print '☆Now Worming, not Warning☆'
+        print '##Now Worming, not Warning##'
         worming_number = halve = ch_sam = 0 # for counter
         branch = numpy.array([])
         while r2 > 1e-5 and sample < sample_max :
@@ -134,7 +147,7 @@ class BranchSearch(object):
             semi_circle = r2*numpy.exp(1.j*theta) + p2 
             if self.isTest:
                 self.worming_data.append(semi_circle)
-            data = self.evovles(semi_circle, y, iter)
+            data = self.evolves(semi_circle, y, iter)
             index = self.mset.where_sign_inversion(data[1].imag)
             
             if len(index) != 1:
@@ -152,14 +165,16 @@ class BranchSearch(object):
                 if worming_number % 100 == 0 or ch_sam !=0:
                     print '%dth worm:(r,sample)=(%f,%d)' % (worming_number, r2, sample),\
                     '|[Im(P_n)]|~%.0e' % numpy.abs(data[1][index-1].imag - data[1][index].imag)
+                if self.isTest and worming_number > 300: break 
+
             ch_sam = 0 
         return branch
 
-    def get_branch_section(self, x1, x2, y, iter, center, radius, intersection=1):
+    def get_branch_section(self, y, iter, center, radius, intersection=1):
         if intersection not in [1,2]: raise ValueError, 'intersection = 1 or 2'
         sec_data=[]
+        print center
         while True:
-            center = self.bisection(x1, x2, y, iter)
             circle = self.make_circle(center, radius)
             if self.isTest:
                 self.worming_data.append(circle)
@@ -167,8 +182,7 @@ class BranchSearch(object):
             if len(index) != intersection:
                 radius = radius*0.5
                 if radius < 1e-16:
-                    print 'worming radius shrinking is Stop! r=%f' % radius
-                    break
+                    raise ValueError, 'worming radius shrinking is Stop! r=%f' % radius
             else:
                 for i in index:
                     x1, x2 = circle[i-1], circle[i]
@@ -198,11 +212,11 @@ class BranchSearch(object):
             else:
                 x2 = xm
         return xm
-    def evovles(self, x, y ,iter):
+    def evolves(self, x, y ,iter):
         y = numpy.array([y for i in range(len(x)) ])
         return self.mset.evolves(x, y, iter)
     def where_sign_inversion(self,x, y, iter):
-        data = self.evovles(x, y, iter)
+        data = self.evolves(x, y, iter)
         return self.mset.where_sign_inversion(data[1].imag)
     def get_mset(self, xi_min, xi_max, eta_min, eta_max, grid):
         mset = Mset(self.map)
@@ -234,6 +248,7 @@ class CompPathIntegration(object):
 if __name__ == '__main__':
     from MapSystem import *
     map = ShudoStandard()
-    cpi = CompPathIntegration(map, 0.0, 6)
-    cpi.get_mset(0.0, 1.0, -0.5, 0.5,100)
+    ms = BranchSearch(map, p=0.0, iter= 6)
+    ms.search_neary_branch(0.5+0.1j)
+    
     
