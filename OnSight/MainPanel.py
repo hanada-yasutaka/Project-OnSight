@@ -4,12 +4,12 @@ import Utils
 import numpy
 
 
-#~ class _SubPanel(wx.Panel):
-	#~ def __init__(self,parent,mapsystem,title):
-		#~ wx.Panel.__init__(self,parent,-1)
 class _SubPanel(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self,parent,mapsystem,title):
 		wx.lib.scrolledpanel.ScrolledPanel.__init__(self,parent,-1)
+		
+		self.SetupScrolling()
+		
 		self.mapsystem=mapsystem.clone()
 		self.mapsystem.Para=mapsystem.Para
 		self.mapsystem.map.Para=mapsystem.Para
