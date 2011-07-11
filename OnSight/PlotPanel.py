@@ -3,8 +3,12 @@ matplotlib.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 from matplotlib.backends.backend_wx import _load_bitmap
-
 from matplotlib.figure import Figure
+
+def createCanvasFigure(window):
+	figure = Figure(figsize=(2,1.5))
+	canvas = FigureCanvas(window, -1, figure)
+	return (canvas,figure)
 
 import wx
 import wx.lib.scrolledpanel
@@ -80,10 +84,14 @@ class PlotPanel(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self,parent):
 		wx.lib.scrolledpanel.ScrolledPanel.__init__(self,parent,-1)
 		
+		self.SetupScrolling()
+		
 		self.Manager=parent.Manager
 		
-		self.figure = Figure(figsize=(2,1.5))
-		self.canvas = FigureCanvas(self, -1, self.figure)
+		#~ self.figure = Figure(figsize=(2,1.5))
+		#~ self.canvas = FigureCanvas(self, -1, self.figure)
+        
+		self.canvas,self.figure=createCanvasFigure(self)
         
 		self.canvas.draw()
 		
@@ -113,6 +121,7 @@ class PlotPanel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.canvas.mpl_connect('key_press_event',self.OnKey)
 		self.canvas.mpl_connect('motion_notify_event',self.OnMove)
 		
+		self.data=[]
 		
 	def OnMove(self,event):
 		try:
@@ -191,12 +200,17 @@ class PlotPanel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.Show()
 		
 		self.clear()
+		self.data=[]
+		
 		self.axes=self.figure.add_subplot(111)
 		self.replot(*args,**kwargs)
+		
 		
 	def replot(self,*args,**kwargs):
 		self.axes.plot(*args,**kwargs)
 		self.setlim()
+		
+		self.data.append((args,kwargs))
 		
 	def onpress(self,event):
 		if event.inaxes is None:return
