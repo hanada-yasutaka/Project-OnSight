@@ -43,7 +43,7 @@ class NumericTextCtrl(wx.TextCtrl):
 		self.SetValidator(NumericValidator())
 		
 	def SetValue(self, value):
-		wx.TextCtrl.SetValue(value)
+		wx.TextCtrl.SetValue(self,value)
 		try:
 			self.value=float( value )
 		except ValueError:
@@ -319,3 +319,34 @@ def getParameterLabel(mapsystem):
 	
 def getLabel(mapsystem):
 	return getAxisLabel(mapsystem),getParameterLabel(mapsystem)
+
+
+class FigureDialog(wx.Dialog):
+	def __init__(self,parent,**kwargs):
+		wx.Dialog.__init__(self,parent,**kwargs)
+		
+		import PlotPanel
+		self.canvas,self.figure=PlotPanel.createCanvasFigure(self)
+		
+		self.axes=self.figure.gca()
+		
+		self.canvas.draw()
+		
+		sizer=wx.BoxSizer(wx.VERTICAL)
+		sizer.Add(self.canvas, 1,flag=wx.SHAPED)
+		
+		btnsizer=wx.StdDialogButtonSizer()
+		btnsizer.AddButton(wx.Button(self, wx.ID_OK))
+		btnsizer.AddButton(wx.Button(self, wx.ID_CANCEL))
+		btnsizer.Realize()
+		
+		sizer.Add(btnsizer, 0)
+		
+		self.SetSizer(sizer)
+		
+
+class RegionDialog(FigureDialog):
+	def __init__(self,parent,**kwargs):
+		FigureDialog.__init__(self,parent,**kwargs)
+		
+		
