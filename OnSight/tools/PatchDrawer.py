@@ -77,11 +77,6 @@ class RectangleDrawer(PatchDrawer):
 		self.dragged=False
 		if event.inaxes is None: return
 		
-		self.width=event.xdata-self.xy[0]
-		self.height=event.ydata-self.xy[1]
-		
-		self.drawrectangle()
-		
 	def drawrectangle(self):
 		self.rectangle.set_xy(self.xy)
 		self.rectangle.set_width(self.width)
@@ -91,6 +86,7 @@ class RectangleDrawer(PatchDrawer):
 		
 class BoxDrawer(RectangleDrawer):
 	center=(0.0,0.0)
+	edge=0.0
 	def __init__(self,axes):
 		RectangleDrawer.__init__(self,axes)
 		
@@ -108,33 +104,27 @@ class BoxDrawer(RectangleDrawer):
 	def onmove(self,event):
 		if not self.dragged or event.inaxes is None: return
 		
-		edge=max(abs(self.center[0]-event.xdata),abs(self.center[1]-event.ydata))
-		self.width=2*edge
-		self.height=2*edge
+		self.edge=max(abs(self.center[0]-event.xdata),abs(self.center[1]-event.ydata))
+		self.width=2*self.edge
+		self.height=2*self.edge
 		
-		self.xy=(self.center[0]-edge,self.center[1]-edge)
+		self.xy=(self.center[0]-self.edge,self.center[1]-self.edge)
 		
 		self.drawrectangle()
 		
 	def onrelease(self,event):
 		self.dragged=False
 		if event.inaxes is None: return
-		
-		edge=max(abs(self.center[0]-event.xdata),abs(self.center[1]-event.ydata))
-		self.width=2*edge
-		self.height=2*edge
-		
-		self.xy=(self.center[0]-edge,self.center[1]-edge)
-		
-		self.drawrectangle()
 
 class CircleDrawer(PatchDrawer):
 	xy=(0.0,0.0)
 	radius=0.0
 	def __init__(self,axes):
 		PatchDrawer.__init__(self,axes)
-		self.circle=matplotlib.patches.Circle(self.xy,radius=self.radius,visible=False)
-		self.axes.add_patch(self.circle)
+		self.patch=matplotlib.patches.Circle(self.xy,radius=self.radius,visible=False)
+		self.axes.add_patch(self.patch)
+		
+		self.circle=self.patch
 		
 		self.dragged=False
 		
@@ -168,6 +158,4 @@ class CircleDrawer(PatchDrawer):
 		self.dragged=False
 		if event.inaxes is None: return
 		
-		self.radius=( (event.xdata-self.xy[0])**2.0 + (event.ydata-self.xy[1])**2.0 )**0.5
 		
-		self.drawcircle()
