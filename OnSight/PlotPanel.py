@@ -1,5 +1,11 @@
 import matplotlib
+<<<<<<< HEAD
+#matplotlib.use('WXAgg')
+#matplotlib.use('macosx')
+matplotlib.use('GTKAgg')
+=======
 matplotlib.use('WXAgg')
+>>>>>>> master
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 from matplotlib.backends.backend_wx import _load_bitmap
