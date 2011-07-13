@@ -30,7 +30,7 @@ panels={
 	'Recurrence Time':RecurrenceTimePanel,
 	'Survival Time':SurvivalTimePanel,
 	'Hitting Time':HittingTimePanel,
-	'Mset':MsetPanel
+	'M set':MsetPanel
 }
 
 class MainPanel(wx.Notebook):
@@ -70,4 +70,11 @@ class MainPanel(wx.Notebook):
 		label,panel=panels.items()[index]
 		self.AddPage(panel(self,self.mapsystem,label),label)
 		self.SetSelection(self.GetPageCount()-1)
+		
+	def GetPages(self):
+		pages={}
+		for i in range(self.GetPageCount()):
+			pages[self.GetPageText(i)]=self.GetPage(i)
+		return pages
+		
 	
