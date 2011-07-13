@@ -346,7 +346,31 @@ class FigureDialog(wx.Dialog):
 		
 
 class RegionDialog(FigureDialog):
-	def __init__(self,parent,**kwargs):
+	def __init__(self,parent,type,**kwargs):
 		FigureDialog.__init__(self,parent,**kwargs)
 		
+		self.type=type
 		
+		import tools.PatchDrawer
+		
+		if self.type == 0:
+			self.rectangle=tools.PatchDrawer.RectangleDrawer(self.axes)
+		if self.type == 1:
+			self.box=tools.PatchDrawer.BoxDrawer(self.axes)
+		if self.type == 2:
+			self.circle=tools.PatchDrawer.CircleDrawer(self.axes)
+		
+		self.CenterOnScreen()
+		
+	def GetValues(self):
+		if self.type == 0:
+			xmin=min(self.rectangle.xy[0],self.rectangle.xy[0]+self.rectangle.width)
+			xmax=max(self.rectangle.xy[0],self.rectangle.xy[0]+self.rectangle.width)
+			
+			ymin=min(self.rectangle.xy[1],self.rectangle.xy[1]+self.rectangle.height)
+			ymax=max(self.rectangle.xy[1],self.rectangle.xy[1]+self.rectangle.height)
+			return (xmin, xmax, ymin, ymax)
+		if self.type == 1:
+			return (self.box,xy[0], self.box.xy[1], self.box.edge)
+		if self.type == 2:
+			return (self.circle.xy[0], self.circle.xy[1], self.circle.radius)
