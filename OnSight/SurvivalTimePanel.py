@@ -63,11 +63,40 @@ class SurvivalTimePanel(_SubPanel):
 			wx.xrc.XRCCTRL(self.panel,'TextCtrlAverage').SetValue(str(self.survivaltime.average))
 			self.distplotpanel.plot(self.survivaltime.axis,self.survivaltime.dist,'-')
 			self.cumplotpanel.plot(self.survivaltime.axis,self.survivaltime.cum,'-')
+		def OnButtonSet(event):
+			dlg=Utils.RegionDialog(self,self.type,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.OK|wx.CANCEL|wx.CENTER)
+			
+			pages=self.GetParent().GetPages()
+			if pages.has_key('Poincare Plot'):
+				for (args,kwargs) in pages['Poincare Plot'].plotpanel.data:
+					dlg.axes.plot(*args,**kwargs)
+			
+			if dlg.ShowModal() == wx.ID_OK:
+				values=dlg.GetValues()
+				if self.type == 0:
+					self.TCListRect[0][0].SetValue(str(values[0]))
+					self.TCListRect[0][1].SetValue(str(values[1]))
+					self.TCListRect[1][0].SetValue(str(values[2]))
+					self.TCListRect[1][1].SetValue(str(values[3]))
+					
+				if self.type == 1:
+					self.TCListBox[0][0].SetValue(str(values[0]))
+					self.TCListBox[1][0].SetValue(str(values[1]))
+					self.TCListBox[2][0].SetValue(str(values[2]))
+					
+				if self.type == 2:
+					self.TCListCircle[0][0].SetValue(str(values[0]))
+					self.TCListCircle[1][0].SetValue(str(values[1]))
+					self.TCListCircle[2][0].SetValue(str(values[2]))
+			
+			dlg.Destroy()
+			
 		
 		self.Bind(wx.EVT_SPINCTRL, OnSpinCtrlSample, wx.xrc.XRCCTRL(self.panel,'SpinCtrlSample'))
 		self.Bind(wx.EVT_SPINCTRL, OnSpinCtrlIteration, wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration'))
 		self.Bind(wx.EVT_RADIOBOX, OnRadioBoxType, wx.xrc.XRCCTRL(self.panel,'RadioBoxType'))
 		self.Bind(wx.EVT_BUTTON, OnButtonDraw, wx.xrc.XRCCTRL(self.panel,'ButtonDraw'))
+		self.Bind(wx.EVT_BUTTON, OnButtonSet, wx.xrc.XRCCTRL(self.panel,'ButtonSet'))
 		
 		#### Creating PlotPanel and survivalTime, Setting default values
 		self.distplotpanel=parent.GetParent().MakePlotPanel(self.title+' Distrbution')

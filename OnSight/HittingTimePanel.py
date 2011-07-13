@@ -79,12 +79,68 @@ class HittingTimePanel(_SubPanel):
 			wx.xrc.XRCCTRL(self.panel,'TextCtrlAverage').SetValue(str(self.hittingtime.average))
 			self.distplotpanel.plot(self.hittingtime.axis,self.hittingtime.dist,'-')
 			self.cumplotpanel.plot(self.hittingtime.axis,self.hittingtime.cum,'-')
+		def OnButtonSetStart(event):
+			dlg=Utils.RegionDialog(self,self.typeStart,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.OK|wx.CANCEL|wx.CENTER)
+			
+			pages=self.GetParent().GetPages()
+			if pages.has_key('Poincare Plot'):
+				for (args,kwargs) in pages['Poincare Plot'].plotpanel.data:
+					dlg.axes.plot(*args,**kwargs)
+			
+			if dlg.ShowModal() == wx.ID_OK:
+				values=dlg.GetValues()
+				if self.typeStart == 0:
+					self.TCListRectStart[0][0].SetValue(str(values[0]))
+					self.TCListRectStart[0][1].SetValue(str(values[1]))
+					self.TCListRectStart[1][0].SetValue(str(values[2]))
+					self.TCListRectStart[1][1].SetValue(str(values[3]))
+					
+				if self.typeStart == 1:
+					self.TCListBoxStart[0][0].SetValue(str(values[0]))
+					self.TCListBoxStart[1][0].SetValue(str(values[1]))
+					self.TCListBoxStart[2][0].SetValue(str(values[2]))
+					
+				if self.typeStart == 2:
+					self.TCListCircleStart[0][0].SetValue(str(values[0]))
+					self.TCListCircleStart[1][0].SetValue(str(values[1]))
+					self.TCListCircleStart[2][0].SetValue(str(values[2]))
+			
+			dlg.Destroy()
+		def OnButtonSetEnd(event):
+			dlg=Utils.RegionDialog(self,self.typeEnd,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.OK|wx.CANCEL|wx.CENTER)
+			
+			pages=self.GetParent().GetPages()
+			if pages.has_key('Poincare Plot'):
+				for (args,kwargs) in pages['Poincare Plot'].plotpanel.data:
+					dlg.axes.plot(*args,**kwargs)
+			
+			if dlg.ShowModal() == wx.ID_OK:
+				values=dlg.GetValues()
+				if self.typeEnd == 0:
+					self.TCListRectEnd[0][0].SetValue(str(values[0]))
+					self.TCListRectEnd[0][1].SetValue(str(values[1]))
+					self.TCListRectEnd[1][0].SetValue(str(values[2]))
+					self.TCListRectEnd[1][1].SetValue(str(values[3]))
+					
+				if self.typeEnd == 1:
+					self.TCListBoxEnd[0][0].SetValue(str(values[0]))
+					self.TCListBoxEnd[1][0].SetValue(str(values[1]))
+					self.TCListBoxEnd[2][0].SetValue(str(values[2]))
+					
+				if self.typeEnd == 2:
+					self.TCListCircleEnd[0][0].SetValue(str(values[0]))
+					self.TCListCircleEnd[1][0].SetValue(str(values[1]))
+					self.TCListCircleEnd[2][0].SetValue(str(values[2]))
+			
+			dlg.Destroy()
 		
 		self.Bind(wx.EVT_SPINCTRL, OnSpinCtrlSample, wx.xrc.XRCCTRL(self.panel,'SpinCtrlSample'))
 		self.Bind(wx.EVT_SPINCTRL, OnSpinCtrlIteration, wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration'))
 		self.Bind(wx.EVT_RADIOBOX, OnRadioBoxTypeStart, wx.xrc.XRCCTRL(self.panel,'RadioBoxTypeStart'))
 		self.Bind(wx.EVT_RADIOBOX, OnRadioBoxTypeEnd, wx.xrc.XRCCTRL(self.panel,'RadioBoxTypeEnd'))
 		self.Bind(wx.EVT_BUTTON, OnButtonDraw, wx.xrc.XRCCTRL(self.panel,'ButtonDraw'))
+		self.Bind(wx.EVT_BUTTON, OnButtonSetEnd, wx.xrc.XRCCTRL(self.panel,'ButtonSetEnd'))
+		self.Bind(wx.EVT_BUTTON, OnButtonSetStart, wx.xrc.XRCCTRL(self.panel,'ButtonSetStart'))
 		
 		#### Creating PlotPanel and hittingTime, Setting default values
 		self.distplotpanel=parent.GetParent().MakePlotPanel(self.title+' Distrbution')
