@@ -79,29 +79,15 @@ class MsetPanel(_SubPanel):
                 self.GetBranch(q)
         def OnGetRealBranch(event):
             if 'Branch0' not in self.checklistbranch.GetStrings():
-                self.branchsearch.get_realbranch()
-                self.checklistbranch.Append('Branch0')
-                self.checklistlabel.append('Branch0')
-                self.checklistindex.append(0)
+                self.GetRealBranch()
                 self.DrawMset()
                 self.BranchDraw()
                 self.plotpanel.draw()
-            # to do if real branch exist
-        def OnDeleteBranch(event):
-            print self.checklistindex, self.checklistlabel
-            count = 0
-            index = []
-            self.checkedindex.sort()
-            for i in self.checkedindex:
-                print i
-                self.checklistbranch.Delete(i-count)
-                self.checklistindex.remove(i)
-                self.checklistlabel.remove('Branch%d'%i)
-                count +=1
-                index.append(i)
-            for i in index:
-                self.checkedindex.remove(i) 
 
+        def OnDeleteBranch(event):
+            if 0 in self.checkedindex: raise TypeError, "Branch0 can't delete"
+            if len(self.checkedindex) != 0:
+                self.DeleteBranches()
             
                                     
 
@@ -145,22 +131,25 @@ class MsetPanel(_SubPanel):
     def GetMset(self):
         self.get_mset_range()
         self.mset_data = self.branchsearch.get_mset(self.xi_min,self.xi_max,self.eta_min,self.eta_max,self.grid)
+    def GetRealBranch(self):
+        self.branchsearch.get_realbranch()
+        self.checklistbranch.Append('Branch0')
+        self.checklistlabel.append('Branch0')
+        self.checklistindex.append(0)
+        self.Reserve.append(numpy.array([]))
     def DrawMset(self):
         self.plotpanel.plot(self.mset_data[0],self.mset_data[1],',k')
         if len(self.branchsearch.branches) != 0:
-            #self.branchsearch.get_realbranch()
             self.BranchDraw()
-            #self.checklistbranch.Append('Branch%d' % len(self.Reserve))
-            #self.checklistindex.append(0)
-            #self.checklistlabel.append('Branch0')
-        #print self.checklistlabel
+
     def OnPress(self,xy):
+        if 'Branch0' not in self.checklistlabel: self.GetRealBranch()
         q = complex(xy[0] + 1.j*xy[1])
-        wx.xrc.XRCCTRL(self.panel, 'StaticTextRightBranch').SetLabel('click:%s' % (self.q1))
+        wx.xrc.XRCCTRL(self.panel, 'StaticTextRightBranch').SetLabel('click:%s' % (q))
         self.TestBranchSearch(q, True)
-        self.checklistbranch.Append('Branch%d' % len(self.Reserve))
-        self.checklistlabel.append('Branch%d' % len(self.Reserve))
-        self.checklistindex.append(len(self.Reserve))
+        self.checklistbranch.Append('Branch%d' % (len(self.Reserve)-1))
+        self.checklistlabel.append('Branch%d' % (len(self.Reserve)-1))
+        self.checklistindex.append((len(self.Reserve)-1))
     def GetBranch(self, q):
         self.branchsearch.branches = []
         self.branchsearch.search_neary_branch(q, isTest=False)
@@ -187,6 +176,25 @@ class MsetPanel(_SubPanel):
         self.Reserve = []
         self.checkedbranchonly = False
         wx.xrc.XRCCTRL(self.panel,'StaticTextPreference').SetLabel('Preference: iteration=%d, p_0 = %.2f' % (self.iteration,self.initial_p))
-        
+    def DeleteBranches(self):
+        count = 0
+        self.checkedindex.sort()
+        for i in range(len(self.checklistindex)):
+            self.checklistbranch.Delete(0)
+        for i in self.checkedindex:
+            self.Reserve.pop(i - count)
+            self.branchsearch.branches.pop(i-count)
+            count +=1
+        self.checklistindex = []
+        self.checklistlabel = []
+        self.checkedindex = []
+        for i in range(len(self.Reserve)):
+            print i
+            self.checklistindex.append(i)
+            self.checklistlabel.append('Branch%d' % i)
+            self.checklistbranch.Append('Branch%d' % i)
+        self.BranchDraw(True)
+        self.plotpanel.draw()
+            
 
 
