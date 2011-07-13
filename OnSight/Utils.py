@@ -371,6 +371,6 @@ class RegionDialog(FigureDialog):
 			ymax=max(self.rectangle.xy[1],self.rectangle.xy[1]+self.rectangle.height)
 			return (xmin, xmax, ymin, ymax)
 		if self.type == 1:
-			return (self.box,xy[0], self.box.xy[1], self.box.edge)
+			return (self.box.xy[0], self.box.xy[1], self.box.edge)
 		if self.type == 2:
 			return (self.circle.xy[0], self.circle.xy[1], self.circle.radius)
