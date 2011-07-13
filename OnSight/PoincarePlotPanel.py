@@ -77,40 +77,28 @@ class PoincarePlotPanel(_SubPanel):
 			wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration').SetValue(self.iteration)
 			OnButtonDraw(event)
 		def OnButtonSet(event):
-			dlg=Utils.RegionDialog(self,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.OK|wx.CANCEL|wx.CENTER)
+			dlg=Utils.RegionDialog(self,self.type,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.OK|wx.CANCEL|wx.CENTER)
 			
 			for (args,kwargs) in self.plotpanel.data:
 				dlg.axes.plot(*args,**kwargs)
 			
-			import tools.PatchDrawer
-			if self.type == 0: rectangle=tools.PatchDrawer.RectangleDrawer(dlg.axes)
-			if self.type == 1: box=tools.PatchDrawer.BoxDrawer(dlg.axes)
-			if self.type == 2: circle=tools.PatchDrawer.CircleDrawer(dlg.axes)
-			
-			dlg.CenterOnScreen()
-			
 			if dlg.ShowModal() == wx.ID_OK:
+				values=dlg.GetValues()
 				if self.type == 0:
-					xmin=min(rectangle.xy[0],rectangle.xy[0]+rectangle.width)
-					xmax=max(rectangle.xy[0],rectangle.xy[0]+rectangle.width)
-					
-					ymin=min(rectangle.xy[1],rectangle.xy[1]+rectangle.height)
-					ymax=max(rectangle.xy[1],rectangle.xy[1]+rectangle.height)
-					
-					self.TCListRect[0][0].SetValue(str(xmin))
-					self.TCListRect[0][1].SetValue(str(xmax))
-					self.TCListRect[1][0].SetValue(str(ymin))
-					self.TCListRect[1][1].SetValue(str(ymax))
+					self.TCListRect[0][0].SetValue(str(values[0]))
+					self.TCListRect[0][1].SetValue(str(values[1]))
+					self.TCListRect[1][0].SetValue(str(values[2]))
+					self.TCListRect[1][1].SetValue(str(values[3]))
 					
 				if self.type == 1:
-					self.TCListBox[0][0].SetValue(str(box.xy[0]))
-					self.TCListBox[1][0].SetValue(str(box.xy[1]))
-					self.TCListBox[2][0].SetValue(str(box.edge))
+					self.TCListdlg[0][0].SetValue(str(values[0]))
+					self.TCListdlg[1][0].SetValue(str(values[1]))
+					self.TCListdlg[2][0].SetValue(str(values[2]))
 					
 				if self.type == 2:
-					self.TCListCircle[0][0].SetValue(str(circle.xy[0]))
-					self.TCListCircle[1][0].SetValue(str(circle.xy[1]))
-					self.TCListCircle[2][0].SetValue(str(circle.radius))
+					self.TCListdlg[0][0].SetValue(str(values[0]))
+					self.TCListdlg[1][0].SetValue(str(values[1]))
+					self.TCListdlg[2][0].SetValue(str(values[2]))
 			
 			dlg.Destroy()
 			
