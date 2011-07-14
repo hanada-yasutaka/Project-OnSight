@@ -22,12 +22,14 @@ class MsetPanel(_SubPanel):
         
         ### Setting default values
         self.map = self.mapsystem.map
+        self.Psetting = self.map.Psetting
         self.iteration = wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration').GetValue()
         self.initial_p = float(wx.xrc.XRCCTRL(self.panel,'TextCtrlInitial_p').GetValue())
         self.branchsearch = maps.CompPathIntegration.BranchSearch(self.map, self.initial_p, self.iteration)            
         wx.xrc.XRCCTRL(self.panel,'StaticTextPreference').SetLabel('Preference: iteration=%d, p_0 = %.2f' % (self.iteration,self.initial_p))
 
         self.Reserve = []
+        self.mapdata = [] 
 
         ### Creating Mset PlotPanel,
         # move plot panel to under other plot panel after last modified 
@@ -45,7 +47,7 @@ class MsetPanel(_SubPanel):
             self.Initialization()
             self.GetMset()
             self.DrawMset()
-            self.msetplot.draw()
+            
         def OnSpinCtrlIteration(event):
             self.iteration = wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration').GetValue()
         def OnTextCtrlInitial_p(event):
@@ -55,21 +57,25 @@ class MsetPanel(_SubPanel):
             self.DrawMset()
             if len(self.branchsearch.branches) != 0:
                 self.DrawBranch()
-            self.msetplot.draw()
+            
         def OnCheckBoxBranchOnly(event):
             if event.IsChecked():
                 self.msetplot.clear()
                 self.DrawBranch(isDrawMset=False)
             else:
- 
                 self.DrawBranch(isDrawMset=True)
-            self.msetplot.draw()
+            
 # branch data notebook
         def OnDrawLset(event):
             self.GetLset()
             #self.DrawLset()
         def OnCheckBoxLsetOnly(event):
-            print event.IsChecked()
+            if event.IsChecked():
+                self.lsetplot.clear()
+                self.DrawLset(isDrawMap=False)
+            else:
+                self.DrawLset(isDrawMap=True)
+            self.lsetplot.draw()
         def OnCheckListBranch(event):
             index = event.GetSelection()
             if self.checklistbranch.IsChecked(index):
@@ -117,7 +123,6 @@ class MsetPanel(_SubPanel):
         self.GetMset()
         self.DrawMset()
         self.msetplot.draw()
-        self.DrawLset()
         self.lsetplot.draw()
 
     def OnPress(self,xy):
@@ -136,16 +141,18 @@ class MsetPanel(_SubPanel):
         else:
             self.branchsearch.branches = []
             self.branchsearch.search_neary_branch(q, isTest=False)
-        self.DrawBranch()
-        self.msetplot.draw()
+        self.DrawBranch()     
     def GetMset(self):
         range = self.get_mset_range()
         self.mset_data = self.branchsearch.get_mset(range[0],range[1],range[2],range[3],range[4])
     def GetLset(self, isPeriodic=True):
-        self.get_lset_range()
+        range = self.get_lset_range()
         self.branchsearch.get_lset(isPeriodic)
         self.DrawLset()
         self.lsetplot.draw()
+    def GetClMap(self):
+        range = self.get_lset_range()
+        self.mapdata = self.branchsearch.get_map(range[0],range[1],range[2],range[3],sample=50, iter=100)
     def GetAction(self):
         pass
     def GetRealBranch(self):
@@ -161,18 +168,24 @@ class MsetPanel(_SubPanel):
             self.msetplot.replot(data.real, data.imag,'.')
             self.msetplot.axes.annotate('%d' % (i) , xy=(data[len(data)/2].real, data[len(data)/2].imag),  xycoords='data',
                                          xytext=(-20, 20), textcoords='offset points', arrowprops=dict(arrowstyle="->"))
+        self.msetplot.draw()
     def DrawMset(self):
         self.msetplot.plot(self.mset_data[0],self.mset_data[1],',k')
         if len(self.branchsearch.branches) != 0:
             self.DrawBranch()
-    def DrawLset(self, isDrawMap=True):
-        if isDrawMap: print 'to do : not implementation of draw map'
+        self.msetplot.draw()
+    def DrawLset(self, isDrawMap=False):
         self.lsetplot.plot()
         for i in range(len(self.branchsearch.lset)):
             data = self.branchsearch.lset[i]
             self.lsetplot.replot(data[0].real, data[1].real,'.')
             self.lsetplot.axes.annotate('%d' % (i) , xy=(data[0][len(data)/2].real, data[1][len(data)/2].real),  xycoords='data',
-                                         xytext=(-20, 20), textcoords='offset points', arrowprops=dict(arrowstyle="->"))    
+                                            xytext=(-20, 20), textcoords='offset points', arrowprops=dict(arrowstyle="->"))
+        if isDrawMap:
+            self.GetClMap()
+            self.lsetplot.replot(self.mapdata[0],self.mapdata[1],color='#AFAFAF',linestyle='',marker=',')
+        self.get_lset_range()
+        #self.lsetplot.draw()
     def DrawAction(self):
         pass
     def get_mset_range(self):
@@ -193,11 +206,12 @@ class MsetPanel(_SubPanel):
         self.lsetplot.xlim = (xmin, xmax)
         self.lsetplot.ylim = (ymin, ymax)
         self.lsetplot.setlim()
+        return xmin, xmax, ymin, ymax
     def get_action_range(self):
         pass
     def Initialization(self):
-
         self.branchsearch = maps.CompPathIntegration.BranchSearch(self.map, self.initial_p, self.iteration)
+        self.branchsearch.Psetting = self.Psetting
         self.Reserve = []
         self.InitializationCheckList()
         wx.xrc.XRCCTRL(self.panel,'StaticTextPreference').SetLabel('Preference: iteration=%d, p_0 = %.2f' % (self.iteration,self.initial_p))
@@ -226,5 +240,7 @@ class MsetPanel(_SubPanel):
             self.checklistlabel.append('Branch%d' % i)
             self.checklistbranch.Append('Branch%d' % i)
         self.DrawBranch(True)
-        self.msetplot.draw()
+        
+        self.DrawLset()
+        self.lsetplot.draw()
 
