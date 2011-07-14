@@ -80,7 +80,6 @@ class BranchSearch(object):
         self.iter = iter
         self.p = p + 0.0j
         self.Psetting=self.map.Psetting
-        
         self.mset = Mset(self.map)
         self.worm_start_point = []
         self.branches = [] 
@@ -217,7 +216,6 @@ class BranchSearch(object):
         return xm
     def evolves(self, x, y ,iter, isPeriod=False):
         y = numpy.array([y for i in range(len(x)) ])
-        print self.Psetting
         if isPeriod:
             data = self.mset.evolves(x, y, iter, self.Psetting)
         else:
@@ -230,7 +228,23 @@ class BranchSearch(object):
         mset = Mset(self.map)
         mset.mset(self.p, self.iter, grid, xi_min, xi_max, eta_min, eta_max)
         return mset.get_mset()
+    def get_map(self, xmin, xmax, ymax, ymin, sample, iter):
+        map = self.map
+        map.isComplex = False
+        ms = MapSystem(map, True)
+        ms.setPeriodic(self.Psetting)
+        x = numpy.random.random(sample)
+        y = numpy.arange(ymin, ymax, (ymax - ymin)/sample)
+        point = Point(map.dim, map.isComplex, [x,y])
+        ms.setInit(point)
+        ms.evolves(iter)
+        data = [[],[]]
 
+        for i in range(1,len(ms.Remain)):
+            data[0].append(numpy.array(ms.Trajectory[i]).transpose()[0])
+            data[1].append(numpy.array(ms.Trajectory[i]).transpose()[1])
+        return data
+        
 class Branch(object):
     pass
 class CompPathIntegration(object):
@@ -257,6 +271,16 @@ if __name__ == '__main__':
     from MapSystem import *
     map = ShudoStandard()
     ms = BranchSearch(map, p=0.0, iter= 6)
-    ms.search_neary_branch(0.5+0.1j)
-    
+    data = ms.get_map(0.0, 1.0, -6.0, 6.0, 100, 300)
+
+
+    #import Gnuplot
+    #g = Gnuplot.Gnuplot(debug=1)
+    #g('set term x11')
+    #g('set term multiplot')
+#    for i in range(len(data)):
+#        print data[i]
+    #    g.plot(zip(data[i].real)
+    #import time
+    #time.sleep(100)
     
