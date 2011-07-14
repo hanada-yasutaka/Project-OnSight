@@ -157,21 +157,27 @@ class MsetPanel(_SubPanel):
     def OnPress(self,xy):
         if 'Branch0' not in self.checklistlabel: self.GetRealBranch()
         q = complex(xy[0] + 1.j*xy[1])
-        wx.xrc.XRCCTRL(self.panel, 'StaticTextRightBranch').SetLabel('click:%s' % (q))
+        #wx.xrc.XRCCTRL(self.panel, 'StaticTextRightBranch').SetLabel('click:%s' % (q))
         self.GetBranch(q, isTest=True)
         self.checklistbranch.Append('Branch%d' % (len(self.Reserve)-1))
         self.checklistlabel.append('Branch%d' % (len(self.Reserve)-1))
         self.checklistindex.append((len(self.Reserve)-1))
     def GetBranch(self, q, isTest=False):
+        print q, isTest
         if isTest:
             self.branchsearch.search_neary_branch(q, isTest=True)
             self.Reserve.append(numpy.array([q]))
+            print self.Reserve
         else:
             self.branchsearch.branches = []
             self.branchsearch.search_neary_branch(q, isTest=False)
         self.BranchDraw()
         self.msetplot.draw()
-
+#    def TestBranchSearch(self, q, isTest):
+#        self.branchsearch.search_neary_branch(q, isTest=True)
+#        self.BranchDraw()
+#        self.msetplot.draw()
+#        self.Reserve.append(numpy.array([q]))
     def BranchDraw(self, isDrawMset=True):
         if isDrawMset: self.msetplot.plot(self.mset_data[0], self.mset_data[1],'k,')
         for i in range(len(self.branchsearch.branches)):
