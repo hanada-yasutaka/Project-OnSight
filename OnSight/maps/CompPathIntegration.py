@@ -83,7 +83,6 @@ class BranchSearch(object):
         self.mset = Mset(self.map)
         self.worm_start_point = []
         self.branches = [] 
-        self.worming_data = []  
         self.lset = []   
         self.action = [] 
     def get_realbranch(self, sample=500):
@@ -111,7 +110,9 @@ class BranchSearch(object):
         self.get_lset()
         self.get_action()
         pass
-    def search_neary_branch(self, x, r=1e-4,isTest=False):
+    def search_neary_branch(self, x, r=1e-4, wsample=100, wr=1e-4, wsamplemax =1e4, isTest=False):
+        self.isTest=isTest
+        if isTest: wr ,wsample, wsamplemax = 0.005, 100, 1e4
         while True:
             circle = self.make_circle(x,r)
             index = self.where_sign_inversion(circle, self.p, self.iter)
@@ -120,14 +121,10 @@ class BranchSearch(object):
             else: break
         section = self.bisection(circle[index[0]-1], circle[index[0]], self.p, self.iter)
         self.worm_start_point.append(section)
-        self.get_branch(section, isTest=isTest)
+        self.get_branch(section, wsample, wr, wsamplemax)
         
-    def get_branch(self, start_point, sample=100, r = 0.0001, sample_max=1e6, isTest=False):
-        self.isTest=isTest
-        branch = numpy.array([])
-        if self.isTest:
-            r ,sample, sample_max = 0.005, 100, 1e4
-        
+    def get_branch(self, start_point, sample=100, r = 0.0001, sample_max=1e5):
+        branch = numpy.array([])        
         point1 = self.get_branch_section(self.p, self.iter, start_point, r, 2)
         branch0 = self.worming(start_point, point1[1], point1[0][0], point1[1], self.p, self.iter, sample, sample_max)
         branch1 = self.worming(start_point, point1[1], point1[0][1], point1[1], self.p, self.iter, sample, sample_max)
@@ -148,8 +145,6 @@ class BranchSearch(object):
             alpha = numpy.angle(p2 - p1) # argument
             theta = numpy.linspace(-numpy.pi + alpha + beta, numpy.pi + alpha - beta, sample)
             semi_circle = r2*numpy.exp(1.j*theta) + p2 
-            if self.isTest:
-                self.worming_data.append(semi_circle)
             data = self.evolves(semi_circle, y, iter)
             index = self.mset.where_sign_inversion(data[1].imag)
             
@@ -178,8 +173,6 @@ class BranchSearch(object):
         sec_data=[]
         while True:
             circle = self.make_circle(center, radius)
-            if self.isTest:
-                self.worming_data.append(circle)
             index = self.where_sign_inversion(circle, y ,iter)
             if len(index) != intersection:
                 radius = radius*0.5
