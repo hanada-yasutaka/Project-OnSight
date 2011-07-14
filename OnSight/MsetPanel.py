@@ -55,14 +55,13 @@ class MsetPanel(_SubPanel):
             self.GetMset()
             self.DrawMset()
             if len(self.branchsearch.branches) != 0:
-                self.DrawBranch()       
+                self.DrawBranch()   
         def OnCheckBoxBranchOnly(event):
             if event.IsChecked():
                 self.msetplot.clear()
                 self.DrawBranch(isDrawMset=False)
             else:
-                self.DrawBranch(isDrawMset=True)            
-# branch data notebook
+                self.DrawBranch(isDrawMset=True)
         def OnDrawLset(event):
             self.GetLset()
             #self.DrawLset()
@@ -85,13 +84,21 @@ class MsetPanel(_SubPanel):
             if len(self.checkedindex) != 0:
                 self.DeleteCheckedBranches()
 
-
+# branch data notebook
         def OnSearch(event):
             # to do dialogue
-            self.Reserve.pop(0)
+            print len(self.branchsearch.branches)
+            branch_sampling = float(wx.xrc.XRCCTRL(self.panel, 'TextCtrlBranchSample').GetValue())
+            branches = self.branchsearch.branches
+            self.branchsearch.branches = []
+            i = 0
             for q in self.Reserve:
-                self.GetBranch(q)
-            
+                print i
+                a = len(branches[i])/branch_sampling
+                self.GetBranch(q, a=a, isTest=False)
+                i+=1
+            self.branchsearch.get_realbranch()
+            print 'after searching',len(self.branchsearch.branches)
 
         ### General notebook
         
@@ -126,19 +133,20 @@ class MsetPanel(_SubPanel):
         if 'Branch0' not in self.checklistlabel: self.GetRealBranch()
         q = complex(xy[0] + 1.j*xy[1])
         self.GetBranch(q, isTest=True)
+        self.DrawBranch()
         self.checklistbranch.Append('Branch%d' % (len(self.Reserve)-1))
         self.checklistlabel.append('Branch%d' % (len(self.Reserve)-1))
         self.checklistindex.append((len(self.Reserve)-1))
         self.GetLset()
         self.GetAction()
-    def GetBranch(self, q, isTest=False):
+    def GetBranch(self, q, wr=0.005, a=0, isTest=False):
         if isTest:
-            self.branchsearch.search_neary_branch(q, isTest=True)
+            self.branchsearch.search_neary_branch(q,wr=wr, isTest=True)
             self.Reserve.append(numpy.array([q]))
-        else:
+        elif len(q) != 0:
             self.branchsearch.branches = []
-            self.branchsearch.search_neary_branch(q, isTest=False)
-        self.DrawBranch()     
+            self.branchsearch.search_neary_branch(q,wr=a*wr, isTest=False)
+#        self.DrawBranch()     
     def GetMset(self):
         range = self.get_mset_range()
         self.mset_data = self.branchsearch.get_mset(range[0],range[1],range[2],range[3],range[4])
