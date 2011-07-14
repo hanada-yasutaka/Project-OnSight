@@ -46,8 +46,7 @@ class MsetPanel(_SubPanel):
             # to do dialogue
             self.Initialization()
             self.GetMset()
-            self.DrawMset()
-            
+            self.DrawMset()      
         def OnSpinCtrlIteration(event):
             self.iteration = wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration').GetValue()
         def OnTextCtrlInitial_p(event):
@@ -56,15 +55,13 @@ class MsetPanel(_SubPanel):
             self.GetMset()
             self.DrawMset()
             if len(self.branchsearch.branches) != 0:
-                self.DrawBranch()
-            
+                self.DrawBranch()       
         def OnCheckBoxBranchOnly(event):
             if event.IsChecked():
                 self.msetplot.clear()
                 self.DrawBranch(isDrawMset=False)
             else:
-                self.DrawBranch(isDrawMset=True)
-            
+                self.DrawBranch(isDrawMset=True)            
 # branch data notebook
         def OnDrawLset(event):
             self.GetLset()
