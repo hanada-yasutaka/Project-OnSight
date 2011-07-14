@@ -91,14 +91,14 @@ class PoincarePlotPanel(_SubPanel):
 					self.TCListRect[1][1].SetValue(str(values[3]))
 					
 				if self.type == 1:
-					self.TCListdlg[0][0].SetValue(str(values[0]))
-					self.TCListdlg[1][0].SetValue(str(values[1]))
-					self.TCListdlg[2][0].SetValue(str(values[2]))
+					self.TCListBox[0][0].SetValue(str(values[0]))
+					self.TCListBox[1][0].SetValue(str(values[1]))
+					self.TCListBox[2][0].SetValue(str(values[2]))
 					
 				if self.type == 2:
-					self.TCListdlg[0][0].SetValue(str(values[0]))
-					self.TCListdlg[1][0].SetValue(str(values[1]))
-					self.TCListdlg[2][0].SetValue(str(values[2]))
+					self.TCListCircle[0][0].SetValue(str(values[0]))
+					self.TCListCircle[1][0].SetValue(str(values[1]))
+					self.TCListCircle[2][0].SetValue(str(values[2]))
 			
 			dlg.Destroy()
 			
