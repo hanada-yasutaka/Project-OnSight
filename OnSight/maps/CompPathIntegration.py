@@ -25,9 +25,10 @@ def _fModC(x,y):
 class Mset(Space):
     def __init__(self, map):
         map.isComplex = True  
-        map.Psetting =[(False,0.0),(False,0.0)] 
+        self.Psetting = map.Psetting
         Space.__init__(self, map.dim, map.isComplex)
         self.map = map
+       # self.map.Psetting = [(False,0.0),(False,0.0)] 
         self.mset_data = numpy.array([])
         self.point = Point(map.dim,map.isComplex)
         self.ms = MapSystem(self.map)    
@@ -54,7 +55,9 @@ class Mset(Space):
                 real = numpy.arange(x.min(), x.max(), (x.max() - x.min())/grid) + 0.j
                 self.mset_data = numpy.append(self.mset_data,real)
 
-    def evolves(self, q, p, iter):
+    def evolves(self, q, p, iter, Psetting=[(False,0.0),(False,0.0)] ):
+        self.map.Psetting = Psetting
+        self.ms = MapSystem(self.map)
         point = Point(self.map.dim, self.map.isComplex, [q,p])
         self.ms.setInit(point)
         self.ms.setMaxImag(None)
@@ -76,20 +79,24 @@ class BranchSearch(object):
         self.map = map
         self.iter = iter
         self.p = p + 0.0j
-        self.mset = Mset(self.map)
+        self.Psetting=self.map.Psetting
         
+        self.mset = Mset(self.map)
         self.worm_start_point = []
-        self.branches = [] # for branch coordinate
+        self.branches = [] 
         self.worming_data = []  
-        self.lset = numpy.array([])   # for lset
-        self.action = numpy.array([]) # for action
+        self.lset = []   
+        self.action = [] 
     def get_realbranch(self, sample=500):
         x = numpy.arange(0.0, 1.0, 1.0/sample) + 0.0j
         self.branches.insert(0,x)
-    def get_lset(self):
-        lset = self.mset.evolves(self.branch, self.iter)
-        self.lset = numpy.array([],lset)
+    def get_lset(self, isPeriod=True):
+        if len(self.lset) != 0: self.lset =[]
+        for branch in self.branches:
+            lset = self.evolves(branch, self.p, self.iter, isPeriod)
+            self.lset.append(lset)
     def get_action(self):
+        # to do self.branch no attribute
         if len(self.branch) == 0: raise ValueError, 'self.branch is empty'
         S = numpy.zeros(len(self.branch),numpy.complex128)
         p = numpy.array([self.p for i in range(len(self.branch))])
@@ -119,12 +126,10 @@ class BranchSearch(object):
     def get_branch(self, start_point, sample=100, r = 0.0001, sample_max=1e6, isTest=False):
         self.isTest=isTest
         branch = numpy.array([])
-
         if self.isTest:
             r ,sample, sample_max = 0.005, 100, 1e4
         
         point1 = self.get_branch_section(self.p, self.iter, start_point, r, 2)
-
         branch0 = self.worming(start_point, point1[1], point1[0][0], point1[1], self.p, self.iter, sample, sample_max)
         branch1 = self.worming(start_point, point1[1], point1[0][1], point1[1], self.p, self.iter, sample, sample_max)
         branch = numpy.append(branch, branch0[::-1]) # append in the inverse order
@@ -210,9 +215,14 @@ class BranchSearch(object):
             else:
                 x2 = xm
         return xm
-    def evolves(self, x, y ,iter):
+    def evolves(self, x, y ,iter, isPeriod=False):
         y = numpy.array([y for i in range(len(x)) ])
-        return self.mset.evolves(x, y, iter)
+        print self.Psetting
+        if isPeriod:
+            data = self.mset.evolves(x, y, iter, self.Psetting)
+        else:
+            data = self.mset.evolves(x, y, iter, ([False, 0.0],[False, 0.0])) 
+        return data
     def where_sign_inversion(self,x, y, iter):
         data = self.evolves(x, y, iter)
         return self.mset.where_sign_inversion(data[1].imag)
