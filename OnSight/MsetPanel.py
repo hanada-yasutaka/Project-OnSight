@@ -169,8 +169,8 @@ class MsetPanel(_SubPanel):
         else:
             self.branchsearch.branches = []
             self.branchsearch.search_neary_branch(q, isTest=False)
-        self.msetplot.draw()
         self.BranchDraw()
+        self.msetplot.draw()
 #    def TestBranchSearch(self, q, isTest):
 #        self.branchsearch.search_neary_branch(q, isTest=True)
 #        self.BranchDraw()
