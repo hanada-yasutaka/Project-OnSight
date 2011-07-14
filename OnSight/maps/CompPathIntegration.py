@@ -67,8 +67,7 @@ class Mset(Space):
         return numpy.where(x1*x2 < 0)[0]
     def get_mset(self):
         return self.mset_data.real, self.mset_data.imag
-    def test(self):
-        print 'test'
+
     
 class BranchSearch(object):
     def __init__(self, map, p, iter):
@@ -173,7 +172,6 @@ class BranchSearch(object):
     def get_branch_section(self, y, iter, center, radius, intersection=1):
         if intersection not in [1,2]: raise ValueError, 'intersection = 1 or 2'
         sec_data=[]
-        print center
         while True:
             circle = self.make_circle(center, radius)
             if self.isTest:
