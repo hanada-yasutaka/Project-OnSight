@@ -34,27 +34,32 @@ class MyNavigationToolbar(NavigationToolbar2Wx):
 		self._clear=None
 		self._getlim=None
 		
-		self.Bind(wx.EVT_TOOL, self.myback, id=self._NTB2_BACK)
-		self.Bind(wx.EVT_TOOL, self.myforward, id=self._NTB2_FORWARD)
-		self.Bind(wx.EVT_TOOL, self.myzoom, id=self._NTB2_ZOOM)
-		self.Bind(wx.EVT_TOOL, self.mypan, id=self._NTB2_PAN)
-		
 		self.Realize()
 		
-	def myback(self,*args):
+		
+	def home(self,*args):
+		# overriding home method
+		NavigationToolbar2Wx.home(self,*args)
+		if callable(self._getlim): self._getlim()
+		
+	def back(self,*args):
+		# overriding back method
 		NavigationToolbar2Wx.back(self,*args)
 		if callable(self._getlim): self._getlim()
 		
-	def myforward(self,*args):
+	def forward(self,*args):
+		# overriding forward method
 		NavigationToolbar2Wx.forward(self,*args)
 		if callable(self._getlim): self._getlim()
 		
-	def mypan(self,*args):
+	def pan(self,*args):
+		# overriding pan method
 		self.ToggleTool(self.IdConnect,False)
 		if callable(self._disconnect): self._disconnect()
 		NavigationToolbar2Wx.pan(self,*args)
 		
-	def myzoom(self,*args):
+	def zoom(self,*args):
+		# overriding zoom method
 		self.ToggleTool(self.IdConnect,False)
 		if callable(self._disconnect): self._disconnect()
 		NavigationToolbar2Wx.zoom(self,*args)
@@ -81,6 +86,38 @@ _linear=0
 _log=1
 _symlog=2
 
+class MPLCanvasClickDragBinder(object):
+	def __init__(self,canvas):
+		self.canvas=canvas
+		
+		self.isConnected=False
+		self.Dragged=False
+		self.connect()
+		
+	def connect(self):
+		if self.isConnected: return
+		self.isConnected=True
+		self.cid_press=self.canvas.mpl_connect('button_press_event', self.onpress)
+		self.cid_release=self.canvas.mpl_connect('button_release_event', self.onrelease)
+		self.cid_move=self.canvas.mpl_connect('motion_notify_event', self.onmove)
+		
+	def disconnect(self):
+		if not self.isConnected: return
+		self.isConnected=False
+		self.canvas.mpl_disconnect(self.cid_press)
+		self.canvas.mpl_disconnect(self.cid_release)
+		self.canvas.mpl_disconnect(self.cid_move)
+		
+	def onpress(self,event):
+		pass
+		
+	def onrelease(self,event):
+		pass
+		
+	def onmove(self,event):
+		pass
+
+
 class PlotPanel(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self,parent):
 		wx.lib.scrolledpanel.ScrolledPanel.__init__(self,parent,-1)
@@ -89,9 +126,6 @@ class PlotPanel(wx.lib.scrolledpanel.ScrolledPanel):
 		
 		self.Manager=parent.Manager
 		
-		#~ self.figure = Figure(figsize=(2,1.5))
-		#~ self.canvas = FigureCanvas(self, -1, self.figure)
-        
 		self.canvas,self.figure=createCanvasFigure(self)
         
 		self.canvas.draw()
@@ -125,10 +159,7 @@ class PlotPanel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.data=[]
 		
 	def OnMove(self,event):
-		try:
-			statusbar=self.GetParent().statusbar
-		except:
-			return
+		statusbar=self.Manager.GetManagedWindow().statusbar
 		if event.inaxes is None:
 			statusbar.SetStatusText("",statusbar.GetFieldsCount()-1)
 		else:
