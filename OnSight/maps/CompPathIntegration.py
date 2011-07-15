@@ -7,19 +7,19 @@ import numpy
 
 twopi=2*numpy.pi
 
-def _fmod(x):
-    return x-numpy.floor(x)
+#def _fmod(x):
+#    return x-numpy.floor(x)
 
-def _fMod1(x,y=1.0):
-    return _fmod(x)
+#def _fMod1(x,y=1.0):
+#    return _fmod(x)
 
-def _fModC1(x,y=1.0):
-    return _fmod(x.real)+x.imag*1j
-def _fMod(x,y):
-    return y*_fmod(x/y)
+#def _fModC1(x,y=1.0):
+#    return _fmod(x.real)+x.imag*1j
+#def _fMod(x,y):
+#    return y*_fmod(x/y)
 
-def _fModC(x,y):
-    return _fMod(x.real,y)+x.imag*1j
+#def _fModC(x,y):
+#    return _fMod(x.real,y)+x.imag*1j
 
 
 class Mset(Space):
@@ -56,8 +56,9 @@ class Mset(Space):
                 self.mset_data = numpy.append(self.mset_data,real)
 
     def evolves(self, q, p, iter, Psetting=[(False,0.0),(False,0.0)] ):
-        self.map.Psetting = Psetting
+        #self.map.Psetting = Psetting
         self.ms = MapSystem(self.map)
+        self.ms.setPeriodic(Psetting)
         point = Point(self.map.dim, self.map.isComplex, [q,p])
         self.ms.setInit(point)
         self.ms.setMaxImag(None)
@@ -94,17 +95,17 @@ class BranchSearch(object):
             lset = self.evolves(branch, self.p, self.iter, isPeriod)
             self.lset.append(lset)
     def get_action(self):
-        # to do self.branch no attribute
-        if len(self.branch) == 0: raise ValueError, 'self.branch is empty'
-        S = numpy.zeros(len(self.branch),numpy.complex128)
-        p = numpy.array([self.p for i in range(len(self.branch))])
-        qp0 = numpy.array([self.branch, p])
-        for i in range(self.iter):
-            qp1 = self.mset.evolves(qp0[0], qp0[1], 1)
-            S +=  self.map.ifunc1(qp1[1]) + self.map.ifunc0(qp0[0]) + qp0[0]*(qp1[1]-qp0[1])
-            qp0 = qp1
-        pylab.plot(S.imag)
-        pylab.show()
+        if len(self.branches) == 0: raise ValueError, 'self.branches is empty'
+        if len(self.action) != 0: self.action = []
+        for branch in self.branches:
+            S = numpy.zeros(len(branch),numpy.complex128)
+            p = numpy.array([self.p for i in range(len(branch))])
+            qp0 = numpy.array([branch, p])
+            for i in range(self.iter):
+                qp1 = self.mset.evolves(qp0[0], qp0[1], 1)
+                S +=  self.map.ifunc1(qp1[1]) + self.map.ifunc0(qp0[0]) + qp0[0]*(qp1[1]-qp0[1])
+                qp0 = qp1
+            self.action.append(S)
         
     def save_branch(self):
         self.get_lset()
@@ -121,9 +122,10 @@ class BranchSearch(object):
             else: break
         section = self.bisection(circle[index[0]-1], circle[index[0]], self.p, self.iter)
         self.worm_start_point.append(section)
-        self.get_branch(section, wsample, wr, wsamplemax)
+        self.get_branch(section, wsample, wr, wsamplemax, isTest=isTest)
         
-    def get_branch(self, start_point, sample=100, r = 0.0001, sample_max=1e5):
+    def get_branch(self, start_point, sample=100, r = 0.0001, sample_max=1e5, isTest=False):
+        self.isTest=isTest
         branch = numpy.array([])        
         point1 = self.get_branch_section(self.p, self.iter, start_point, r, 2)
         branch0 = self.worming(start_point, point1[1], point1[0][0], point1[1], self.p, self.iter, sample, sample_max)
@@ -139,6 +141,7 @@ class BranchSearch(object):
         print '##Now Worming, not Warning##'
         worming_number = halve = ch_sam = 0 # for counter
         branch = numpy.array([])
+
         while r2 > 1e-5 and sample < sample_max :
             d = numpy.abs(p1 - p2)
             beta = numpy.arccos((r2**2 + d**2 - r1**2) / (2.0*r2*d ) ) # Low of cosines
@@ -146,8 +149,7 @@ class BranchSearch(object):
             theta = numpy.linspace(-numpy.pi + alpha + beta, numpy.pi + alpha - beta, sample)
             semi_circle = r2*numpy.exp(1.j*theta) + p2 
             data = self.evolves(semi_circle, y, iter)
-            index = self.mset.where_sign_inversion(data[1].imag)
-            
+            index = self.mset.where_sign_inversion(data[1].imag)  
             if len(index) != 1:
                 r2 =r2*0.5
                 halve +=1
@@ -165,8 +167,9 @@ class BranchSearch(object):
                     '|[Im(P_n)]|~%.0e' % numpy.abs(data[1][index-1].imag - data[1][index].imag)
                 if self.isTest and worming_number > 300: break 
 
-            ch_sam = 0 
-        return branch
+            ch_sam = 0
+        return branch 
+        
 
     def get_branch_section(self, y, iter, center, radius, intersection=1):
         if intersection not in [1,2]: raise ValueError, 'intersection = 1 or 2'
@@ -224,15 +227,16 @@ class BranchSearch(object):
     def get_map(self, xmin, xmax, ymax, ymin, sample, iter):
         map = self.map
         map.isComplex = False
+        map.Psetting = self.Psetting
         ms = MapSystem(map, True)
         ms.setPeriodic(self.Psetting)
+        print self.Psetting
         x = numpy.random.random(sample)
         y = numpy.arange(ymin, ymax, (ymax - ymin)/sample)
         point = Point(map.dim, map.isComplex, [x,y])
         ms.setInit(point)
         ms.evolves(iter)
         data = [[],[]]
-
         for i in range(1,len(ms.Remain)):
             data[0].append(numpy.array(ms.Trajectory[i]).transpose()[0])
             data[1].append(numpy.array(ms.Trajectory[i]).transpose()[1])
