@@ -31,6 +31,7 @@ class MsetPanel(_SubPanel):
         self.Reserve = []
         self.mapdata = [] 
         self.checkedbranchonly = False
+        self.checkedlsetonly = True
         ### Creating PlotPanel,
         # move plot panel to under other plot panel after last modified 
         self.msetplot = parent.GetParent().MakePlotPanel('set M')
@@ -50,29 +51,18 @@ class MsetPanel(_SubPanel):
             self.initial_p = float(wx.xrc.XRCCTRL(self.panel,'TextCtrlInitial_p').GetValue())
         def OnDrawMset(event):
             self.msetplot.clear()
-            if self.checkedbranchonly:
-                self.DrawBranch(isDrawMset=False)
-            else:
-                self.GetMset()
-                self.DrawBranch(isDrawMset=True)
+            self.DrawBranch(isDrawMset=not self.checkedbranchonly)
         def OnCheckBoxBranchOnly(event):
             self.checkedbranchonly = event.IsChecked()
-            if event.IsChecked():
-                self.msetplot.clear()
-                self.DrawBranch(isDrawMset=False)
-            else:
-                self.msetplot.clear()
-                self.DrawBranch(isDrawMset=True)
+            self.msetplot.clear()
+            self.DrawBranch(isDrawMset=not event.IsChecked())
         def OnDrawLset(event):
             self.GetLset()
             self.DrawLset()
         def OnCheckBoxLsetOnly(event):
-            if event.IsChecked():
-                self.lsetplot.clear()
-                self.DrawLset(isDrawMap=False)
-            else:
-                self.DrawLset(isDrawMap=True)
-            self.lsetplot.draw()
+            self.checkedlsetonly = event.IsChecked()
+            self.lsetplot.clear()
+            self.DrawLset(isDrawMap=not event.IsChecked())
         def OnCheckListBranch(event):
             index = event.GetSelection()
             if self.checklistbranch1.IsChecked(index):
@@ -86,8 +76,15 @@ class MsetPanel(_SubPanel):
                 self.DeleteCheckedBranches()
         def OnSearch(event):
             # to do dialogue
+            try: self.actionplot
+            except AttributeError: self.actionplot = parent.GetParent().MakePlotPanel('Im Action vs Re p_n')
             self.SearchBranch()
-        
+            for branch in self.branchsearch.branches:
+                print len(branch)
+            self.DrawBranch(isDrawMset=False)
+            self.DrawLset()
+            self.DrawAction()
+            print 'End Searching'
         ## Branch pruning
         def OnCheckList2Branch(event):
             index = event.GetSelection()
@@ -102,8 +99,13 @@ class MsetPanel(_SubPanel):
             except AttributeError: self.actionplot = parent.GetParent().MakePlotPanel('Im Action vs Re p_n')
             self.GetAction()
             self.DrawAction()
-            
-    
+        def OnDrawAll(event):
+            try: self.actionplot
+            except AttributeError: self.actionplot = parent.GetParent().MakePlotPanel('Im Action vs Re p_n')
+            self.DrawBranch(isDrawMset=not self.checkedbranchonly)
+            self.DrawLset(isDrawMap = not self.checkedlsetonly)
+            self.GetAction()
+            self.DrawAction()
             
         if wx.Platform != '__WXMAC__':
             self.Bind(wx.EVT_SPINCTRL,OnSpinCtrlIteration, wx.xrc.XRCCTRL(self.panel, 'SpinCtrlIteration'))
@@ -122,6 +124,7 @@ class MsetPanel(_SubPanel):
         self.checklistbranch1 = wx.xrc.XRCCTRL(self.panel, 'CheckListBranch1')
         self.Bind(wx.EVT_CHECKLISTBOX, OnCheckListBranch, self.checklistbranch1)
         self.Bind(wx.EVT_BUTTON, OnDeleteBranch, wx.xrc.XRCCTRL(self.panel, 'ButtonDeleteBranch'))
+        self.Bind(wx.EVT_BUTTON, OnDrawAll, wx.xrc.XRCCTRL(self.panel, 'ButtonDrawAll'))
         self.Bind(wx.EVT_BUTTON, OnSearch, wx.xrc.XRCCTRL(self.panel, 'ButtonSearch'))
         ###
         #
@@ -130,6 +133,8 @@ class MsetPanel(_SubPanel):
         self.checkedindex2 = []
         self.checklistbranch2 = wx.xrc.XRCCTRL(self.panel, 'CheckListBranch2')
         self.Bind(wx.EVT_CHECKLISTBOX, OnCheckList2Branch, self.checklistbranch2)
+        
+        
         self.GetMset()
         self.DrawMset()
         self.msetplot.draw()
@@ -155,15 +160,14 @@ class MsetPanel(_SubPanel):
             a = len(branches[i])/branch_sampling
             self.GetBranch(q, a=a, isTest=False)
             i+=1
-        self.branchsearch.get_realbranch()            
+        self.branchsearch.get_realbranch(branch_sampling)            
         self.branchsearch.worm_start_point = []
-        self.DrawBranch()
     def GetBranch(self, q, wr=0.005, a=0, isTest=False):
         if isTest:
             self.branchsearch.search_neary_branch(q,wr=wr, isTest=True)
             self.Reserve.append(numpy.array([q]))
         else:
-            self.branchsearch.get_branch(q, r=a*wr)
+            self.branchsearch.get_branch(q, r=a*wr,isTest=False)
     def GetMset(self):
         range = self.get_mset_range()
         self.mset_data = self.branchsearch.get_mset(range[0],range[1],range[2],range[3],range[4])
@@ -174,7 +178,7 @@ class MsetPanel(_SubPanel):
         range = self.get_lset_range()
         self.mapdata = self.branchsearch.get_map(range[0],range[1],range[2],range[3],sample=50, iter=100)
     def GetAction(self):
-        self.branchsearch.action=[]
+#        self.branchsearch.action=[]
         self.branchsearch.get_action()
     def GetRealBranch(self):
         self.branchsearch.get_realbranch()
@@ -202,7 +206,9 @@ class MsetPanel(_SubPanel):
         self.msetplot.draw()
     def DrawLset(self, isDrawMap=False):
         self.lsetplot.plot()
-        for i in range(len(self.branchsearch.lset)):
+        if len(self.checkedindex) == 0: index = range(len(self.branchsearch.lset))
+        else: index = self.checkedindex
+        for i in index:
             data = self.branchsearch.lset[i]
             self.lsetplot.replot(data[0].real, data[1].real,'.')
             self.lsetplot.axes.annotate('%d' % (i) , xy=(data[0][len(data)/2].real, data[1][len(data)/2].real),  xycoords='data',
@@ -214,7 +220,9 @@ class MsetPanel(_SubPanel):
         self.lsetplot.draw()
     def DrawAction(self):
         self.actionplot.plot()
-        for i in range(len(self.branchsearch.action)):
+        if len(self.checkedindex) == 0: index = range(len(self.branchsearch.action))
+        else: index = self.checkedindex
+        for i in index:
             action = self.branchsearch.action[i]
             lset = self.branchsearch.lset[i]
             self.actionplot.replot(lset[1].real, action.imag, '.')
