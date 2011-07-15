@@ -95,6 +95,7 @@ class BranchSearch(object):
             self.lset.append(lset)
     def get_action(self):
         if len(self.branches) == 0: raise ValueError, 'self.branches is empty'
+        if len(self.action) != 0: self.action = []
         for branch in self.branches:
             S = numpy.zeros(len(branch),numpy.complex128)
             p = numpy.array([self.p for i in range(len(branch))])
@@ -122,9 +123,10 @@ class BranchSearch(object):
             else: break
         section = self.bisection(circle[index[0]-1], circle[index[0]], self.p, self.iter)
         self.worm_start_point.append(section)
-        self.get_branch(section, wsample, wr, wsamplemax)
+        self.get_branch(section, wsample, wr, wsamplemax, isTest=isTest)
         
-    def get_branch(self, start_point, sample=100, r = 0.0001, sample_max=1e5):
+    def get_branch(self, start_point, sample=100, r = 0.0001, sample_max=1e5, isTest=False):
+        self.isTest=isTest
         branch = numpy.array([])        
         point1 = self.get_branch_section(self.p, self.iter, start_point, r, 2)
         branch0 = self.worming(start_point, point1[1], point1[0][0], point1[1], self.p, self.iter, sample, sample_max)
@@ -137,9 +139,11 @@ class BranchSearch(object):
         self.branches.append(branch)
 
     def worming(self, p1, r1, p2, r2, y, iter,sample,sample_max):
+        print self.isTest
         print '##Now Worming, not Warning##'
         worming_number = halve = ch_sam = 0 # for counter
         branch = numpy.array([])
+
         while r2 > 1e-5 and sample < sample_max :
             d = numpy.abs(p1 - p2)
             beta = numpy.arccos((r2**2 + d**2 - r1**2) / (2.0*r2*d ) ) # Low of cosines
@@ -147,8 +151,7 @@ class BranchSearch(object):
             theta = numpy.linspace(-numpy.pi + alpha + beta, numpy.pi + alpha - beta, sample)
             semi_circle = r2*numpy.exp(1.j*theta) + p2 
             data = self.evolves(semi_circle, y, iter)
-            index = self.mset.where_sign_inversion(data[1].imag)
-            
+            index = self.mset.where_sign_inversion(data[1].imag)  
             if len(index) != 1:
                 r2 =r2*0.5
                 halve +=1
@@ -166,8 +169,9 @@ class BranchSearch(object):
                     '|[Im(P_n)]|~%.0e' % numpy.abs(data[1][index-1].imag - data[1][index].imag)
                 if self.isTest and worming_number > 300: break 
 
-            ch_sam = 0 
-        return branch
+            ch_sam = 0
+        return branch 
+        
 
     def get_branch_section(self, y, iter, center, radius, intersection=1):
         if intersection not in [1,2]: raise ValueError, 'intersection = 1 or 2'
