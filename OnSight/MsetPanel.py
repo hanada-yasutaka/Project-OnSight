@@ -57,8 +57,8 @@ class MsetPanel(_SubPanel):
             self.msetplot.clear()
             self.DrawBranch(isDrawMset=not event.IsChecked())
         def OnDrawLset(event):
-            self.GetLset()
-            self.DrawLset()
+            self.lsetplot.clear()
+            self.DrawLset(isDrawMap=not self.checkedlsetonly)
         def OnCheckBoxLsetOnly(event):
             self.checkedlsetonly = event.IsChecked()
             self.lsetplot.clear()
@@ -82,6 +82,8 @@ class MsetPanel(_SubPanel):
             for branch in self.branchsearch.branches:
                 print len(branch)
             self.DrawBranch(isDrawMset=False)
+            self.GetLset()
+            self.GetAction()
             self.DrawLset()
             self.DrawAction()
             print 'End Searching'
@@ -176,9 +178,9 @@ class MsetPanel(_SubPanel):
         self.branchsearch.get_lset(isPeriodic)
     def GetClMap(self):
         range = self.get_lset_range()
+        print range
         self.mapdata = self.branchsearch.get_map(range[0],range[1],range[2],range[3],sample=50, iter=100)
     def GetAction(self):
-#        self.branchsearch.action=[]
         self.branchsearch.get_action()
     def GetRealBranch(self):
         self.branchsearch.get_realbranch()
