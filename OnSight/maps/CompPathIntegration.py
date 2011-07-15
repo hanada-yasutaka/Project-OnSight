@@ -7,19 +7,19 @@ import numpy
 
 twopi=2*numpy.pi
 
-def _fmod(x):
-    return x-numpy.floor(x)
+#def _fmod(x):
+#    return x-numpy.floor(x)
 
-def _fMod1(x,y=1.0):
-    return _fmod(x)
+#def _fMod1(x,y=1.0):
+#    return _fmod(x)
 
-def _fModC1(x,y=1.0):
-    return _fmod(x.real)+x.imag*1j
-def _fMod(x,y):
-    return y*_fmod(x/y)
+#def _fModC1(x,y=1.0):
+#    return _fmod(x.real)+x.imag*1j
+#def _fMod(x,y):
+#    return y*_fmod(x/y)
 
-def _fModC(x,y):
-    return _fMod(x.real,y)+x.imag*1j
+#def _fModC(x,y):
+#    return _fMod(x.real,y)+x.imag*1j
 
 
 class Mset(Space):
@@ -56,8 +56,9 @@ class Mset(Space):
                 self.mset_data = numpy.append(self.mset_data,real)
 
     def evolves(self, q, p, iter, Psetting=[(False,0.0),(False,0.0)] ):
-        self.map.Psetting = Psetting
+        #self.map.Psetting = Psetting
         self.ms = MapSystem(self.map)
+        self.ms.setPeriodic(Psetting)
         point = Point(self.map.dim, self.map.isComplex, [q,p])
         self.ms.setInit(point)
         self.ms.setMaxImag(None)
@@ -105,8 +106,6 @@ class BranchSearch(object):
                 S +=  self.map.ifunc1(qp1[1]) + self.map.ifunc0(qp0[0]) + qp0[0]*(qp1[1]-qp0[1])
                 qp0 = qp1
             self.action.append(S)
-        #pylab.plot(S.imag)
-        #pylab.show()
         
     def save_branch(self):
         self.get_lset()
@@ -139,7 +138,6 @@ class BranchSearch(object):
         self.branches.append(branch)
 
     def worming(self, p1, r1, p2, r2, y, iter,sample,sample_max):
-        print self.isTest
         print '##Now Worming, not Warning##'
         worming_number = halve = ch_sam = 0 # for counter
         branch = numpy.array([])
@@ -229,15 +227,16 @@ class BranchSearch(object):
     def get_map(self, xmin, xmax, ymax, ymin, sample, iter):
         map = self.map
         map.isComplex = False
+        map.Psetting = self.Psetting
         ms = MapSystem(map, True)
         ms.setPeriodic(self.Psetting)
+        print self.Psetting
         x = numpy.random.random(sample)
         y = numpy.arange(ymin, ymax, (ymax - ymin)/sample)
         point = Point(map.dim, map.isComplex, [x,y])
         ms.setInit(point)
         ms.evolves(iter)
         data = [[],[]]
-
         for i in range(1,len(ms.Remain)):
             data[0].append(numpy.array(ms.Trajectory[i]).transpose()[0])
             data[1].append(numpy.array(ms.Trajectory[i]).transpose()[1])
