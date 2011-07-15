@@ -94,17 +94,18 @@ class BranchSearch(object):
             lset = self.evolves(branch, self.p, self.iter, isPeriod)
             self.lset.append(lset)
     def get_action(self):
-        # to do self.branch no attribute
-        if len(self.branch) == 0: raise ValueError, 'self.branch is empty'
-        S = numpy.zeros(len(self.branch),numpy.complex128)
-        p = numpy.array([self.p for i in range(len(self.branch))])
-        qp0 = numpy.array([self.branch, p])
-        for i in range(self.iter):
-            qp1 = self.mset.evolves(qp0[0], qp0[1], 1)
-            S +=  self.map.ifunc1(qp1[1]) + self.map.ifunc0(qp0[0]) + qp0[0]*(qp1[1]-qp0[1])
-            qp0 = qp1
-        pylab.plot(S.imag)
-        pylab.show()
+        if len(self.branches) == 0: raise ValueError, 'self.branches is empty'
+        for branch in self.branches:
+            S = numpy.zeros(len(branch),numpy.complex128)
+            p = numpy.array([self.p for i in range(len(branch))])
+            qp0 = numpy.array([branch, p])
+            for i in range(self.iter):
+                qp1 = self.mset.evolves(qp0[0], qp0[1], 1)
+                S +=  self.map.ifunc1(qp1[1]) + self.map.ifunc0(qp0[0]) + qp0[0]*(qp1[1]-qp0[1])
+                qp0 = qp1
+            self.action.append(S)
+        #pylab.plot(S.imag)
+        #pylab.show()
         
     def save_branch(self):
         self.get_lset()
