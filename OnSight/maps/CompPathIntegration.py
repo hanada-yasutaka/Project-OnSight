@@ -7,19 +7,6 @@ import numpy
 
 twopi=2*numpy.pi
 
-#def _fmod(x):
-#    return x-numpy.floor(x)
-
-#def _fMod1(x,y=1.0):
-#    return _fmod(x)
-
-#def _fModC1(x,y=1.0):
-#    return _fmod(x.real)+x.imag*1j
-#def _fMod(x,y):
-#    return y*_fmod(x/y)
-
-#def _fModC(x,y):
-#    return _fMod(x.real,y)+x.imag*1j
 
 
 class Mset(Space):
@@ -107,10 +94,27 @@ class BranchSearch(object):
                 qp0 = qp1
             self.action.append(S)
         
-    def save_branch(self):
+    def save_branch(self, path):
+        import os
         self.get_lset()
         self.get_action()
-        pass
+        for i in range(len(self.branches)):
+            filename = '%s/Branch%s.dat' % (path, i)
+        #    if os.path.isfile(path) != True: raise TypeError
+            index = range(len(self.branches[i]))
+            data = numpy.array([index,
+                         self.branches[i].real, self.branches[i].imag,
+                         self.lset[i][0].real, self.lset[i][1].real,
+                         self.lset[i][0].imag, self.lset[i][1].imag,
+                         self.action[i].real, self.action[i].imag
+                        ])
+            numpy.savetxt('%s' % filename, data.transpose())
+            file = open('%s' % filename, 'a')
+            file.write('# 0.index, 1.Re[q_0], 2.Im[q_0], 3.Re[q_n], 4.Re[p_n], 5.Im[q_n], 6.Im[p_n], 7.Re[S], 8.Im[S]\n')
+            file.write('# index,\t set M_t%d \t set L_t%d\t action_%d\n' % (self.iter, self.iter, self.iter))
+            file.close()
+        
+
     def search_neary_branch(self, x, r=1e-4, wsample=100, wr=1e-4, wsamplemax =1e4, isTest=False):
         self.isTest=isTest
         if isTest: wr ,wsample, wsamplemax = 0.005, 100, 1e4
