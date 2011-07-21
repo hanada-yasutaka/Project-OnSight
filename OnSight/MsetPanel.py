@@ -51,6 +51,7 @@ class MsetPanel(_SubPanel):
             self.initial_p = float(wx.xrc.XRCCTRL(self.panel,'TextCtrlInitial_p').GetValue())
         def OnDrawMset(event):
             self.msetplot.clear()
+            self.GetMset()
             self.DrawBranch(isDrawMset=not self.checkedbranchonly)
         def OnCheckBoxBranchOnly(event):
             self.checkedbranchonly = event.IsChecked()
@@ -75,27 +76,51 @@ class MsetPanel(_SubPanel):
             if len(self.checkedindex) != 0:
                 self.DeleteCheckedBranches()
         def OnSearch(event):
-            # to do dialogue
-            try: self.actionplot
-            except AttributeError: self.actionplot = parent.GetParent().MakePlotPanel('Im Action vs Re p_n')
-            self.SearchBranch()
-            for branch in self.branchsearch.branches:
-                print len(branch)
-            self.DrawBranch(isDrawMset=False)
-            self.GetLset()
-            self.GetAction()
-            self.DrawLset()
-            self.DrawAction()
+            if len(self.checklistindex) == 0: raise ValueError, 'Branch was not searched'
+            dlg = wx.MessageDialog(self, 'Branch Search tasks a long time.\nSo, Each Branch data are saved in your directory.\nAre you OK?',
+                                   'Warning',
+                                   wx.OK | wx.CANCEL | wx.ICON_WARNING)
+            result = dlg.ShowModal()
+            dlg.Destroy()
+            if result == wx.ID_OK:
+                self.SearchBranch()
+                self.SaveBranch()
+
+            #    for branch in self.branchsearch.branches:
+            #        print len(branch)
+            #        self.DrawBranch(isDrawMset=False)
+            #        self.GetLset()
+            #        self.DrawLset()
+            #self.GetAction()
+            #self.DrawAction()
+
             print 'End Searching'
         ## Branch pruning
+        def OnLoad(event):
+            import os
+            home = os.getcwd()
+            projpath = home + '/.onsight/%s/Mset/project' % (self.mapsystem.MapName)
+            #name = 'iter%d_p0%.5f.mset' % (self.iteration, self.initial_p)
+            dlg = wx.FileDialog(self, message='Choose a .mset file',
+                                    defaultDir=projpath, defaultFile="",
+   #                                 wildcard=wildcard,
+                                    style=wx.OPEN | wx.MULTIPLE | wx.CHANGE_DIR)
+            if dlg.ShowModal() == wx.ID_OK:
+                path=str(dlg.GetPaths()[0])
+                print path
+                file = open('%s' % path, 'r')
+                for line in file:
+                    print line
+            dlg.Destroy()
         def OnCheckList2Branch(event):
-            index = event.GetSelection()
-            if self.checklistbranch2.IsChecked(index):
-                self.checkedindex2.append(index)
-            else:
-                self.checkedindex2.remove(index)
-            self.checkedindex2.sort()
-            print self.checkedindex2
+                pass
+            #index = event.GetSelection()
+            #if self.checklistbranch2.IsChecked(index):
+            #    self.checkedindex2.append(index)
+            #else:
+            #    self.checkedindex2.remove(index)
+            #self.checkedindex2.sort()
+            #print self.checkedindex2
         def OnDrawAction(event):
             try: self.actionplot
             except AttributeError: self.actionplot = parent.GetParent().MakePlotPanel('Im Action vs Re p_n')
@@ -108,7 +133,7 @@ class MsetPanel(_SubPanel):
             self.DrawLset(isDrawMap = not self.checkedlsetonly)
             self.GetAction()
             self.DrawAction()
-            
+
         if wx.Platform != '__WXMAC__':
             self.Bind(wx.EVT_SPINCTRL,OnSpinCtrlIteration, wx.xrc.XRCCTRL(self.panel, 'SpinCtrlIteration'))
         else:
@@ -128,6 +153,7 @@ class MsetPanel(_SubPanel):
         self.Bind(wx.EVT_BUTTON, OnDeleteBranch, wx.xrc.XRCCTRL(self.panel, 'ButtonDeleteBranch'))
         self.Bind(wx.EVT_BUTTON, OnDrawAll, wx.xrc.XRCCTRL(self.panel, 'ButtonDrawAll'))
         self.Bind(wx.EVT_BUTTON, OnSearch, wx.xrc.XRCCTRL(self.panel, 'ButtonSearch'))
+        self.Bind(wx.EVT_BUTTON, OnLoad , wx.xrc.XRCCTRL(self.panel, 'ButtonLoad'))
         ###
         #
         self.Bind(wx.EVT_BUTTON, OnDrawAction, wx.xrc.XRCCTRL(self.panel, 'ButtonDrawAction'))
@@ -297,4 +323,23 @@ class MsetPanel(_SubPanel):
         
         self.DrawLset()
         self.lsetplot.draw()
-
+ 
+    def SaveBranch(self):
+        import os
+        #home = os.environ['Home']
+        home = os.getcwd()
+        name = self.mapsystem.MapName
+        datapath = home + '/.onsight/%s/Mset/data/p0_%.3f/step%d' % (self.mapsystem.MapName, self.initial_p, self.iteration)
+        if os.path.exists(datapath) == False:
+            os.makedirs(datapath)
+        self.branchsearch.save_branch(datapath)
+        
+        projpath = home + '/.onsight/%s/Mset/project' % (self.mapsystem.MapName)
+        if os.path.exists(projpath) == False:
+            os.makedirs(projpath)
+        name = 'iter%dp0_%.5f.mset' % (self.iteration, self.initial_p)
+        file = open("%s/%s" % (projpath, name), 'w')
+        file.write('%d\n%.5f\n' % (self.iteration,self.initial_p))
+        file.write('%s\n' % datapath)
+        file.close()
+            
