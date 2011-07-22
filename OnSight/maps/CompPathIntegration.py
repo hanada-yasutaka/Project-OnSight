@@ -234,7 +234,6 @@ class BranchSearch(object):
         map.Psetting = self.Psetting
         ms = MapSystem(map, True)
         ms.setPeriodic(self.Psetting)
-        print self.Psetting
         x = numpy.random.random(sample)
         y = numpy.arange(ymin, ymax, (ymax - ymin)/sample)
         point = Point(map.dim, map.isComplex, [x,y])
