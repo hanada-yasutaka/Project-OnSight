@@ -6,6 +6,13 @@ import maps.MapSystem, maps.CompPathIntegration
 
 from MainPanel import _SubPanel
 
+def sort_nicely( l ): 
+    import re 
+    """ Sort the given list in the way that humans expect. 
+    """ 
+    convert = lambda text: int(text) if text.isdigit() else text 
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
+    l.sort( key=alphanum_key ) 
 
 
 class MsetPanel(_SubPanel):
@@ -28,7 +35,6 @@ class MsetPanel(_SubPanel):
         self.branchsearch = maps.CompPathIntegration.BranchSearch(self.map, self.initial_p, self.iteration)            
         wx.xrc.XRCCTRL(self.panel,'StaticTextPreference').SetLabel('Preference: iteration=%d, p_0 = %.2f' % (self.iteration,self.initial_p))
 
-        self.Reserve = []
         self.mapdata = [] 
         self.checkedbranchonly = False
         self.checkedlsetonly = True
@@ -37,7 +43,7 @@ class MsetPanel(_SubPanel):
         self.msetplot = parent.GetParent().MakePlotPanel('set M')
         self.msetplot.OnPress=self.OnPress         
         self.lsetplot = parent.GetParent().MakePlotPanel('set L')
-
+        self.actionplot = parent.GetParent().MakePlotPanel('Im Action vs Re p_n')
         ### Event methods
 # general notebook
         def OnApply(event):
@@ -67,17 +73,19 @@ class MsetPanel(_SubPanel):
         def OnCheckListBranch(event):
             index = event.GetSelection()
             if self.checklistbranch1.IsChecked(index):
-                self.checkedindex.append(index)
+                self.checkedindex1.append(index)
             else:
-                self.checkedindex.remove(index)
-            self.checkedindex.sort()
+                self.checkedindex1.remove(index)
+            self.checkedindex1.sort()
         def OnDeleteBranch(event):
-            if 0 in self.checkedindex: raise TypeError, "Branch0 can't delete"
-            if len(self.checkedindex) != 0:
+            if 0 in self.checkedindex1: raise TypeError, "Branch0 can't delete"
+
+            if len(self.checkedindex1) != 0:
                 self.DeleteCheckedBranches()
+        # branch data
         def OnSearch(event):
-            if len(self.checklistindex) == 0: raise ValueError, 'Branch was not searched'
-            dlg = wx.MessageDialog(self, 'Branch Search tasks a long time.\nSo, Each Branch data are saved in your directory.\nAre you OK?',
+            if len(self.checklistindex1) == 0: raise ValueError, 'Branch was not searched'
+            dlg = wx.MessageDialog(self, 'Branch Search tasks a long time.\nSo, Each Branch data are saved in your home directory.\nAre you OK?',
                                    'Warning',
                                    wx.OK | wx.CANCEL | wx.ICON_WARNING)
             result = dlg.ShowModal()
@@ -86,49 +94,34 @@ class MsetPanel(_SubPanel):
                 self.SearchBranch()
                 self.SaveBranch()
 
-            #    for branch in self.branchsearch.branches:
-            #        print len(branch)
-            #        self.DrawBranch(isDrawMset=False)
-            #        self.GetLset()
-            #        self.DrawLset()
-            #self.GetAction()
-            #self.DrawAction()
-
-            print 'End Searching'
-        ## Branch pruning
         def OnLoad(event):
             import os
-            home = os.getcwd()
+            home = os.environ['HOME']
             projpath = home + '/.onsight/%s/Mset/project' % (self.mapsystem.MapName)
-            #name = 'iter%d_p0%.5f.mset' % (self.iteration, self.initial_p)
             dlg = wx.FileDialog(self, message='Choose a .mset file',
                                     defaultDir=projpath, defaultFile="",
-   #                                 wildcard=wildcard,
+                                    wildcard='.mset',
                                     style=wx.OPEN | wx.MULTIPLE | wx.CHANGE_DIR)
             if dlg.ShowModal() == wx.ID_OK:
                 path=str(dlg.GetPaths()[0])
-                print path
                 file = open('%s' % path, 'r')
+                proj = []
                 for line in file:
-                    print line
+                    proj.append(line)
+                self.LoadBranch(proj)
             dlg.Destroy()
         def OnCheckList2Branch(event):
-                pass
-            #index = event.GetSelection()
-            #if self.checklistbranch2.IsChecked(index):
-            #    self.checkedindex2.append(index)
-            #else:
-            #    self.checkedindex2.remove(index)
-            #self.checkedindex2.sort()
-            #print self.checkedindex2
+            index = event.GetSelection()
+            if self.checklistbranch2.IsChecked(index):
+                self.checkedindex2.append(index)
+            else:
+                self.checkedindex2.remove(index)
+            self.checkedindex2.sort()
+            print self.checkedindex2
         def OnDrawAction(event):
-            try: self.actionplot
-            except AttributeError: self.actionplot = parent.GetParent().MakePlotPanel('Im Action vs Re p_n')
             self.GetAction()
             self.DrawAction()
         def OnDrawAll(event):
-            try: self.actionplot
-            except AttributeError: self.actionplot = parent.GetParent().MakePlotPanel('Im Action vs Re p_n')
             self.DrawBranch(isDrawMset=not self.checkedbranchonly)
             self.DrawLset(isDrawMap = not self.checkedlsetonly)
             self.GetAction()
@@ -145,9 +138,9 @@ class MsetPanel(_SubPanel):
         self.Bind(wx.EVT_BUTTON, OnDrawLset, wx.xrc.XRCCTRL(self.panel,'ButtonDrawLset'))
         self.Bind(wx.EVT_CHECKBOX, OnCheckBoxLsetOnly,   wx.xrc.XRCCTRL(self.panel, 'CheckBoxLsetOnly'))
         ###
-        self.checklistindex = []
-        self.checkedindex = []
-        self.checklistlabel = []
+        self.checklistindex1 = []
+        self.checkedindex1 = []
+        self.checklistlabel1 = []
         self.checklistbranch1 = wx.xrc.XRCCTRL(self.panel, 'CheckListBranch1')
         self.Bind(wx.EVT_CHECKLISTBOX, OnCheckListBranch, self.checklistbranch1)
         self.Bind(wx.EVT_BUTTON, OnDeleteBranch, wx.xrc.XRCCTRL(self.panel, 'ButtonDeleteBranch'))
@@ -159,6 +152,8 @@ class MsetPanel(_SubPanel):
         self.Bind(wx.EVT_BUTTON, OnDrawAction, wx.xrc.XRCCTRL(self.panel, 'ButtonDrawAction'))
         ### Branch Pruning
         self.checkedindex2 = []
+        self.checklistindex2 = []
+        self.checklistlabel2 = []
         self.checklistbranch2 = wx.xrc.XRCCTRL(self.panel, 'CheckListBranch2')
         self.Bind(wx.EVT_CHECKLISTBOX, OnCheckList2Branch, self.checklistbranch2)
         
@@ -167,18 +162,20 @@ class MsetPanel(_SubPanel):
         self.DrawMset()
         self.msetplot.draw()
         self.lsetplot.draw()
+        self.actionplot.draw()
 
     def OnPress(self,xy):
-        if 'Branch0' not in self.checklistlabel: self.GetRealBranch()
+        if 'Branch0' not in self.checklistlabel1: self.GetRealBranch()
         q = complex(xy[0] + 1.j*xy[1])
         self.GetBranch(q, isTest=True)
         self.DrawBranch()
-        self.checklistbranch1.Append('Branch%d' % (len(self.Reserve)-1))
-        self.checklistbranch2.Append('Branch%d' % (len(self.Reserve)-1))
-        self.checklistlabel.append('Branch%d' % (len(self.Reserve)-1))
-        self.checklistindex.append((len(self.Reserve)-1))
+        self.checklistbranch1.Append('Branch%3d' % (len(self.branchsearch.branches)-1))
+        self.checklistlabel1.append('Branch%d' % (len(self.branchsearch.branches)-1))
+        self.checklistindex1.append((len(self.branchsearch.branches)-1))
         self.GetLset()
         self.DrawLset()
+        self.GetAction()
+        self.DrawAction()
     def SearchBranch(self):
         branch_sampling = float(wx.xrc.XRCCTRL(self.panel, 'TextCtrlBranchSample').GetValue())
         branches = self.branchsearch.branches
@@ -193,7 +190,6 @@ class MsetPanel(_SubPanel):
     def GetBranch(self, q, wr=0.005, a=0, isTest=False):
         if isTest:
             self.branchsearch.search_neary_branch(q,wr=wr, isTest=True)
-            self.Reserve.append(numpy.array([q]))
         else:
             self.branchsearch.get_branch(q, r=a*wr,isTest=False)
     def GetMset(self):
@@ -204,22 +200,19 @@ class MsetPanel(_SubPanel):
         self.branchsearch.get_lset(isPeriodic)
     def GetClMap(self):
         range = self.get_lset_range()
-        print range
         self.mapdata = self.branchsearch.get_map(range[0],range[1],range[2],range[3],sample=50, iter=100)
     def GetAction(self):
         self.branchsearch.get_action()
     def GetRealBranch(self):
         self.branchsearch.get_realbranch()
-        self.checklistbranch1.Append('Branch0')
-        self.checklistbranch2.Append('Branch0')
-        self.checklistlabel.append('Branch0')
-        self.checklistindex.append(0)
-        self.Reserve.append(numpy.array([]))
+        self.checklistbranch1.Append('Branch  0')
+       # self.checklistbranch2.Append('Branch0')
+        self.checklistlabel1.append('Branch0')
+        self.checklistindex1.append(0)
     def DrawBranch(self, isDrawMset=True):
-        if len(self.checkedindex) == 0: br_list= range(len(self.branchsearch.branches))
-        else: br_list = self.checkedindex
+        if len(self.checkedindex1) == 0: br_list = range(len(self.branchsearch.branches))
+        else: br_list = self.checkedindex1
         self.msetplot.plot()
-        #for i in range(len(self.branchsearch.branches)):
         for i in br_list:
             data = self.branchsearch.branches[i]
             self.msetplot.replot(data.real, data.imag,'.')
@@ -234,12 +227,12 @@ class MsetPanel(_SubPanel):
         self.msetplot.draw()
     def DrawLset(self, isDrawMap=False):
         self.lsetplot.plot()
-        if len(self.checkedindex) == 0: index = range(len(self.branchsearch.lset))
-        else: index = self.checkedindex
+        if len(self.checkedindex1) == 0: index = range(len(self.branchsearch.lset))
+        else: index = self.checkedindex1
         for i in index:
             data = self.branchsearch.lset[i]
             self.lsetplot.replot(data[0].real, data[1].real,'.')
-            self.lsetplot.axes.annotate('%d' % (i) , xy=(data[0][len(data)/2].real, data[1][len(data)/2].real),  xycoords='data',
+            self.lsetplot.axes.annotate('%d' % (i) , xy=(data[0][len(data[0])/2].real, data[1][len(data[1])/2].real),  xycoords='data',
                                             xytext=(-20, 20), textcoords='offset points', arrowprops=dict(arrowstyle="->"))
         if isDrawMap:
             self.GetClMap()
@@ -248,8 +241,8 @@ class MsetPanel(_SubPanel):
         self.lsetplot.draw()
     def DrawAction(self):
         self.actionplot.plot()
-        if len(self.checkedindex) == 0: index = range(len(self.branchsearch.action))
-        else: index = self.checkedindex
+        if len(self.checkedindex1) == 0: index = range(len(self.branchsearch.action))
+        else: index = self.checkedindex1
         for i in index:
             action = self.branchsearch.action[i]
             lset = self.branchsearch.lset[i]
@@ -289,47 +282,53 @@ class MsetPanel(_SubPanel):
     def Initialization(self):
         self.branchsearch = maps.CompPathIntegration.BranchSearch(self.map, self.initial_p, self.iteration)
         self.branchsearch.Psetting = self.Psetting
-        self.Reserve = []
         self.InitializationCheckList()
+        self.lsetplot.clear()
+        self.msetplot.clear()
+        self.GetMset()
+        self.DrawMset()
         wx.xrc.XRCCTRL(self.panel,'StaticTextPreference').SetLabel('Preference: iteration=%d, p_0 = %.2f' % (self.iteration,self.initial_p))
     def DeleteCheckedBranches(self):
         count = 0
-        self.checkedindex.sort()
-        for i in self.checkedindex:
-            self.Reserve.pop(i - count)
+        self.checkedindex1.sort()
+        for i in self.checkedindex1:
             self.branchsearch.worm_start_point.pop(i-count - 1)
             self.branchsearch.lset.pop(i-count)
+            self.branchsearch.action.pop(i-count)
             self.branchsearch.branches.pop(i-count)
             # to do after implimentation of Get Action
             # self.branchsearch.action.pop(i-count)
             count +=1
+        self.checkedindex1 = []
         self.InitializationCheckList()
         self.UpdataCheckList()
     def InitializationCheckList(self):
-        for i in range(len(self.checklistindex)):
+        for i in range(len(self.checklistindex1)):
             self.checklistbranch1.Delete(0)
-            self.checklistbranch2.Delete(0)
-        self.lsetplot.clear()
-        self.checklistindex = []
-        self.checklistlabel = []
-        self.checkedindex = []
+        self.checklistindex1 = []
+        self.checklistlabel1 = []
+        self.checkedindex1 = []
     def UpdataCheckList(self):
-        for i in range(len(self.Reserve)):
-            self.checklistindex.append(i)
-            self.checklistlabel.append('Branch%d' % i)
-            self.checklistbranch1.Append('Branch%d' % i)
-            self.checklistbranch2.Append('Branch%d' % i)
+        for i in range(len(self.branchsearch.branches)):
+            self.checklistindex1.append(i)
+            self.checklistlabel1.append('Branch%d' % i)
+            self.checklistbranch1.Append('Branch%3d' % i)
+            #self.checklistbranch2.Append('Branch%d' % i)
         self.DrawBranch(True)
-        
         self.DrawLset()
-        self.lsetplot.draw()
+        self.DrawAction()
+
+    def UpdataCheckList2(self):
+        for i in range(len(self.branchsearch.branches)):
+            self.checklistindex2.append(i)
+            self.checklistlable1.append('Branch%d' % i)
+            self.checklistbranch2.Append('Branch%3d', i)
  
     def SaveBranch(self):
         import os
-        #home = os.environ['Home']
-        home = os.getcwd()
+        home = os.environ['HOME']
         name = self.mapsystem.MapName
-        datapath = home + '/.onsight/%s/Mset/data/p0_%.3f/step%d' % (self.mapsystem.MapName, self.initial_p, self.iteration)
+        datapath = home + '/.onsight/%s/Mset/data/p0_%.1f/step%d' % (self.mapsystem.MapName, self.initial_p, self.iteration)
         if os.path.exists(datapath) == False:
             os.makedirs(datapath)
         self.branchsearch.save_branch(datapath)
@@ -337,9 +336,30 @@ class MsetPanel(_SubPanel):
         projpath = home + '/.onsight/%s/Mset/project' % (self.mapsystem.MapName)
         if os.path.exists(projpath) == False:
             os.makedirs(projpath)
-        name = 'iter%dp0_%.5f.mset' % (self.iteration, self.initial_p)
+        name = 'iter%dp0_%.1f.mset' % (self.iteration, self.initial_p)
         file = open("%s/%s" % (projpath, name), 'w')
-        file.write('%d\n%.5f\n' % (self.iteration,self.initial_p))
-        file.write('%s\n' % datapath)
+        file.write('%d\n%.1f\n' % (self.iteration,self.initial_p))
+        file.write('%s' % datapath)
         file.close()
-            
+    def LoadBranch(self, proj):
+        import glob
+        self.iteration = int(proj[0])
+        self.initial_p = float(proj[1])        
+        wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration').SetValue(self.iteration)
+        wx.xrc.XRCCTRL(self.panel,'TextCtrlInitial_p').SetValue(proj[1])
+        datapath = proj[2] + '/Branch*.dat'
+        
+        self.Initialization()
+        branch_list = glob.glob(datapath)
+        sort_nicely(branch_list)
+        for branch in branch_list:
+            data = numpy.loadtxt('%s' % branch ).transpose()
+            self.branchsearch.branches.append(data[1] + 1.j*data[2])
+            self.branchsearch.lset.append([ data[3] + 1.j*data[5], data[4] + 1.j*data[6] ] )
+            self.branchsearch.action.append(data[7] + 1.j*data[8])
+        self.UpdataCheckList()
+        
+        self.DrawBranch(not self.checkedbranchonly)
+        self.DrawLset(not self.checkedlsetonly)
+        self.DrawAction()
+
