@@ -245,22 +245,20 @@ class BranchSearch(object):
             data[1].append(numpy.array(ms.Trajectory[i]).transpose()[1])
         return data
         
-class Branch(object):
-    pass
+
 class CompPathIntegration(object):
-    def __init__(self, map, p, iter, isTest=False):
+    def __init__(self, map, p, iter):
         map.isComplex = True
         self.map = map
         self.p = p
         self.iter = iter
-        self.isTest=isTest
-        
-    def get_lset(self):
+    def branch_pruing(self):
         pass
-
-    def get_action(self):
+    def get_pruning_lset(self):
         pass
-    def branch_pruning(self):
+    def get_pruning_action(self):
+        pass
+    def get_pruning_branch(self):
         pass
     def path_integration(self):
         pass

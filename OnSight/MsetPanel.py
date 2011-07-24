@@ -313,7 +313,6 @@ class MsetPanel(_SubPanel):
             self.checklistindex1.append(i)
             self.checklistlabel1.append('Branch%d' % i)
             self.checklistbranch1.Append('Branch%3d' % i)
-            #self.checklistbranch2.Append('Branch%d' % i)
         self.DrawBranch(True)
         self.DrawLset()
         self.DrawAction()
@@ -321,8 +320,8 @@ class MsetPanel(_SubPanel):
     def UpdataCheckList2(self):
         for i in range(len(self.branchsearch.branches)):
             self.checklistindex2.append(i)
-            self.checklistlable1.append('Branch%d' % i)
-            self.checklistbranch2.Append('Branch%3d', i)
+            self.checklistlabel2.append('Branch%d' % i)
+            self.checklistbranch2.Append('Branch%3d' % i)
  
     def SaveBranch(self):
         import os
@@ -358,7 +357,7 @@ class MsetPanel(_SubPanel):
             self.branchsearch.lset.append([ data[3] + 1.j*data[5], data[4] + 1.j*data[6] ] )
             self.branchsearch.action.append(data[7] + 1.j*data[8])
         self.UpdataCheckList()
-        
+        self.UpdataCheckList2()
         self.DrawBranch(not self.checkedbranchonly)
         self.DrawLset(not self.checkedlsetonly)
         self.DrawAction()
