@@ -7,6 +7,8 @@ class PhaseSpace2d(object):
     def __init__(self, range, hdim=100):
         self.range = range
         self.hdim = hdim
+        self.q = numpy.arange(self.range[0][0], self.range[0][1], (self.range[0][1] - self.range[0][0])/self.hdim)
+        self.p = numpy.arange(self.range[1][0], self.range[1][1], (self.range[1][1] - self.range[1][0])/self.hdim)
 class Hole(PhaseSpace2d):
     def __init__(self, bsetting):
         self.bsetting = bsetting
@@ -23,8 +25,14 @@ class Perturbation(PhaseSpace2d):
 class WaveFunction(PhaseSpace2d):
     def __init__(self, range, hdim):
         PhaseSpace2d.__init__(self, range, hdim)
-    def del_q(self, q_c):
-        print self.range, self.hdim
+        self.vec = numpy.zeros(self.hdim, dtype=numpy.complex128)
+    def del_q(self, q_in):
+        d = self.range[0][1] - self.range[0][0]
+        s = int(round(self.q.min()*self.hdim/d))
+        qq = numpy.arange(s, s+self.hdim, 1, dtype=int)
+        q_c = int(round(q_in*self.hdim/d))
+        index = numpy.where(qq == q_c)[0]
+        self.vec[index] = 1.0
     def del_p(self, p_c):
         pass
     def coherent(self, q_c, p_c):
@@ -49,10 +57,10 @@ class Qmap(PhaseSpace2d):
     def __init__(self, map, range, hdim):
         self.map = map
         PhaseSpace2d.__init__(self, range, hdim)
-        self.q = numpy.arange(self.range[0][0], self.range[0][1], (self.range[0][1] - self.range[0][0])/self.hdim)
-        self.p = numpy.arange(self.range[1][0], self.range[1][1], (self.range[1][1] - self.range[1][0])/self.hdim)
     def set_inipacket(self):
+        print self.range, self.hdim, len(self.q)
         self.wave = WaveFunction(self.range, self.hdim)
+        self.wave.del_q(0.29)
         # use initial setting of wavefunction
         #x_c = int(x_in*hdim)/float(hdim)
     def evolve(self):
@@ -66,7 +74,8 @@ class Qmap(PhaseSpace2d):
         self.q = numpy.arange(self.range[0][0], self.range[0][1], (self.range[0][1] - self.range[0][0])/self.hdim)
         self.p = numpy.arange(self.range[1][0], self.range[1][1], (self.range[1][1] - self.range[1][0])/self.hdim)
     def get_range(self):
-        print self.range, self.hdim
+        return self.range, self.hdim
+    
 class QmapSystem(object):
     def __init__(self, map):
         if isinstance(map, Symplectic2d) != True: raise TypeError
@@ -88,7 +97,7 @@ class QmapSystem(object):
         self.range = [(qmin, qmax), (pmin, pmax)]
         self.hdim = hdim
         self.qmap.set_range(self.range, hdim)
-        self.qmap.get_range()
+ 
     def set_inipacket(self):
         self.qmap.set_inipacket()
 
@@ -99,4 +108,8 @@ if __name__ == '__main__':
     map = StandardMap()
     #Space(2, False)x
     qmap = QmapSystem(map)
-    qmap.set_range(0.0, 2.0, -1.0, 1.0, 100)
+    qmap.set_inipacket()
+    qmap.set_range(-0.5, 0.5, -0.5, 0.5, 50)
+    qmap.set_inipacket()
+    qmap.set_range(-1.0, 1.0 , -1.0, 1.0 , 10)
+    qmap.set_inipacket()
