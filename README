@@ -23,7 +23,7 @@ supports classical, complex, and quantum mappings.
 
 
 OnSight is a wxPython Application.
-It supposes to run python2.x series and Max OS 10.6 or later and major Unix/Linux platforms.
+It supposes to run python2.x series and Mac OS 10.6 or later and major Unix/Linux platforms.
 
 Prerequisites.
 
