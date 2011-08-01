@@ -37,7 +37,7 @@ class NumericTextCtrl(wx.TextCtrl):
 			try:
 				self.value=float( self.GetValue() )
 			except ValueError:
-				wx.TextCtrl.SetValue(str(self.value))
+				wx.TextCtrl.SetValue(self,str(self.value))
 		OnText()
 		parent.Bind(wx.EVT_TEXT, OnText, self)
 		self.SetValidator(NumericValidator())
