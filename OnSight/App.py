@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, time
 
 import wx
 import wx.aui
@@ -82,21 +82,40 @@ class SubFrame(_SubFrame):
 		self.parameterpanel=SettingPanel.SettingPanel(self)
 		self.Manager.AddPane(self.parameterpanel, wx.aui.AuiPaneInfo().Name("SettingPanel").Caption("Settings").Top().Layer(0).Floatable(False).CloseButton(False).BestSize(wx.Size(480,160)).MinSize(wx.Size(400,100)) )
 		
+		# LogPanel
+		logpanel=wx.Panel(self,-1)
+		self.log=wx.TextCtrl(logpanel,-1,style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
+		logsizer=wx.BoxSizer(wx.VERTICAL)
+		logsizer.Add(self.log,1,wx.EXPAND|wx.ALL)
+		logpanel.SetSizer(logsizer)
+		
+		self.Manager.AddPane(logpanel,wx.aui.AuiPaneInfo().Name("LogPanel").Caption("Log Viewer").Dockable(False).Show(False).BestSize(wx.Size(480,160)).MinSize(wx.Size(400,100)))
 		
 		self.Manager.Update()
 		self.PerspectiveCurrent=self.Manager.SavePerspective()
 		
+		# Creating menubar
 		menubar=parent.CreateBaseMenuBar()
+		
 		for (menu,label) in menubar.GetMenus():
 			if label=='Window':
 				menu.AppendSeparator()
 				item=menu.Append(-1,'Plot Panel Viewer')
 				self.Bind(wx.EVT_MENU,self.OnPlotPanelViewer,item)
+				
+				item=menu.Append(-1,'Log Viewer')
+				def OnLog(event):
+					self.Manager.GetPane("LogPanel").Show(True).Float().FloatingPosition(wx.Point(100, 100))
+					self.Manager.Update()
+					if(self.GetDEBUG()):self.LogWrite("LogViewer")
+				self.Bind(wx.EVT_MENU,OnLog,item)
 		
 		menu=self.mainpanel.CreateMenuMain()
 		menubar.Insert(1,menu,"Functions")
 		
 		self.SetMenuBar(menubar)
+		
+		if(self.GetDEBUG()):self.LogWrite("New Frame for "+self.MapName)
 		
 	def OnPlotPanelViewer(self,event):
 		panes=[]
@@ -130,6 +149,8 @@ class SubFrame(_SubFrame):
 			
 			self.Manager.AddPane(panel,wx.aui.AuiPaneInfo().Name('Viewer').Caption('Plot Panel Viewer').Float().Dockable(False).DestroyOnClose(True).FloatingPosition(wx.Point(100, 100)).BestSize(wx.Size(320,240)) )
 			self.Manager.Update()
+			
+			if(self.GetDEBUG()):self.LogWrite("OnPlotPanelViewer")
 		
 	def MakePlotPanel(self,caption):
 		plotpanel=PlotPanel.PlotPanel(self)
@@ -138,6 +159,7 @@ class SubFrame(_SubFrame):
 		self.Manager.AddPane(plotpanel, PaneInfo )
 		
 		self.Manager.Update()
+		if(self.GetDEBUG()):self.LogWrite("New PlotPanel")
 		
 		self.plotpanels.append(plotpanel)
 		return plotpanel
@@ -146,14 +168,28 @@ class SubFrame(_SubFrame):
 		for plotpanel in self.plotpanels:
 			plotpanel.clear()
 			plotpanel.draw()
-
+		if(self.GetDEBUG()):self.LogWrite("All PlotPanels are Cleared.")
+	
+	def LogWrite(self,message):
+		write=time.strftime("%X")+": "
+		try:
+			write=write+str(message)
+		except:
+			pass
+		write=write+"\n"
+		self.log.WriteText(write)
+		
+	def GetDEBUG(self):
+		return self.GetParent().GetParent().DEBUG
 
 #---------------------------------------------------------------------------
 
 class MainFrame(wx.aui.AuiMDIParentFrame):
-	def __init__(self, parent, title):
+	def __init__(self, parent, title, debug=False):
 		wx.aui.AuiMDIParentFrame.__init__(self, parent, -1, title, size = (1080, 720),style=wx.DEFAULT_FRAME_STYLE)
 		self.SetMinSize((640,480))
+		
+		self.DEBUG=debug
 		
 		# this works only in MSW
 		#self.Tile(wx.VERTICAL)
@@ -173,6 +209,7 @@ class MainFrame(wx.aui.AuiMDIParentFrame):
 		self.Bind(wx.EVT_CLOSE, self.OnExit)
 		
 		self.ClientWindow=self.GetClientWindow()
+		
 		
 		#### debug 
 		#~ mapsystem=maps.MapSystem.MapSystem(maps.MapSystem.StandardMap(2.0))
@@ -375,15 +412,17 @@ class MainFrame(wx.aui.AuiMDIParentFrame):
 
 class MainApp(wx.App):
 	def OnInit(self):
-		
 		#TODO create splash window here
 		#TODO create dialog to confirm packages and its version
 		
 		self.SetAppName("onsight")
-		frame=MainFrame(None, "OnSight")
-		frame.Show()
+		self.frame=MainFrame(None, "OnSight", debug=False)
+		self.frame.Show()
 		
 		return True
+		
+	def SetDEBUG(self,debug):
+		self.frame.DEBUG=debug
 
 #---------------------------------------------------------------------------
 

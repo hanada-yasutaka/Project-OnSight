@@ -5,6 +5,10 @@ import getopt
 
 #---------------------------------------------------------------------------
 def main(argv):
+	basepath=os.path.dirname(os.path.abspath(__file__))
+	sys.path.append(os.path.join(basepath,'OnSight'))
+	os.chdir(basepath)
+	
 	#TODO support command line application without GUI 
 	try:
 		opts, args = getopt.getopt(argv, "h:d", ["help"])
@@ -13,6 +17,7 @@ def main(argv):
 	import OnSight.App
 	
 	app = OnSight.App.MainApp(False)
+	app.SetDEBUG(False)
 	app.MainLoop()
 #---------------------------------------------------------------------------
 

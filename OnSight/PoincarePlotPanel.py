@@ -4,7 +4,6 @@ import numpy
 import maps.MapSystem
 
 from MainPanel import _SubPanel
-
 import Utils
 
 class PoincarePlotPanel(_SubPanel):
