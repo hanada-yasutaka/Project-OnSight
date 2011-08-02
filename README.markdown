@@ -1,14 +1,12 @@
 OnSight (Pre-alpha version)
 =============================
 
- 
-
 Name: OnSight
 Version: 0.0.1
 Author: Akira Akaishi, Yasutaka Hanada
-License: GPL License
+License: GNU General Public License
 Copyright: Copyright (C) 2011 Project-OnSight All Rights Reserved.
-Last Modified: 09,Jul,2011
+Last Modified: 01,Aug,2011
 
 --------------------------------
 
@@ -21,22 +19,21 @@ supports classical, complex, and quantum mappings.
 
 ### System Requirements
 
+OnSight is a python application.
+The following python modules are required.
 
-OnSight is a wxPython Application.
-It supposes to run python2.x series and Mac OS 10.6 or later and major Unix/Linux platforms.
-
-Prerequisites.
-
-1.python
-2.scipy
-3.numpy
+1.wx
+2.numpy
+3.scipy
 4.matplotlib
-5.wx
+
+It confirmed to run on OSX 10.6 and Ubuntu.
+(not confirmed on MSW)
 
 ### Installation
 
-### 
+### Known Problems
 
-### Change log
+### Change Log
 
 
