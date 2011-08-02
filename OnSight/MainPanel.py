@@ -15,6 +15,12 @@ class _SubPanel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.mapsystem.map.Para=mapsystem.Para
 		self.mapsystem.phasespace=mapsystem.phasespace
 		self.title=title
+		
+	def LogWrite(self,message):
+		self.GetParent().GetParent().LogWrite(message)
+		
+	def GetDEBUG(self):
+		return self.GetParent().GetParent().GetDEBUG()
 
 
 from PoincarePlotPanel import PoincarePlotPanel
