@@ -22,14 +22,7 @@ class _SubPanel(wx.lib.scrolledpanel.ScrolledPanel):
 	def GetDEBUG(self):
 		return self.GetParent().GetParent().GetDEBUG()
 
-
-from PoincarePlotPanel import PoincarePlotPanel
-from RecurrenceTimePanel import RecurrenceTimePanel
-from SurvivalTimePanel import SurvivalTimePanel
-from HittingTimePanel import HittingTimePanel
-from MsetPanel import MsetPanel
-
-
+from panels import *
 
 panels={
 	'Poincare Plot':PoincarePlotPanel,
