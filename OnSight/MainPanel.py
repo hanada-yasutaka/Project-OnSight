@@ -77,6 +77,8 @@ class MainPanel(wx.Notebook):
 		self.AddPage(panel(self,self.mapsystem,label),label)
 		self.SetSelection(self.GetPageCount()-1)
 		
+		event.GetEventObject().Enable(id,False)
+		
 	def GetPages(self):
 		pages={}
 		for i in range(self.GetPageCount()):
