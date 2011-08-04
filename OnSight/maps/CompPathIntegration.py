@@ -73,6 +73,9 @@ class BranchSearch(object):
         self.branches = [] 
         self.lset = []   
         self.action = [] 
+        
+        self.branch_data = []
+        self.cut_branches_data = []
     def get_realbranch(self, sample=500):
         x = numpy.arange(0.0, 1.0, 1.0/sample) + 0.0j
         self.branches.insert(0,x)
@@ -244,6 +247,66 @@ class BranchSearch(object):
             data[0].append(numpy.array(ms.Trajectory[i]).transpose()[0])
             data[1].append(numpy.array(ms.Trajectory[i]).transpose()[1])
         return data
+
+    def get_pruning_branch(self, branch_data, cut_pmin=-1.0, cut_pmax=1.0, isChain=False):
+        if numpy.sum(numpy.abs(branch_data[2].imag) < 1e-16) == len(branch_data[2].imag):
+            index = numpy.arange(len(branch_data[2].imag))
+            #import pylab
+            #pylab.plot(branch_data[0].real, branch_data[0].imag, '--')
+            #pylab.plot(branch_data[0][index].real, branch_data[0][index].imag, 'o')
+            #pylab.show()
+        elif isChain :
+            index = self.adhoc_branch_pruning(branch_data)
+        else:
+            count = 0.0
+            index = []
+            for x in branch_data[1][1].real:
+                if x > cut_pmin and x < cut_pmax and branch_data[2][count].imag >= 0:
+                    index.append(count)
+                count += 1
+        self.cut_branches_data.append([branch_data[0][index], [branch_data[1][0][index], branch_data[1][1][index]], branch_data[2][index]])
+        #return branch_data[0][index], [branch_data[1][0][index], branch_data[1][1][index]], branch_data[2][index]
+    def difference(self, x):
+        inf = numpy.float('inf')
+        x1 = numpy.insert(x, 0, 0.0)
+        x2 = numpy.insert(x, len(x), 0.0)
+        diff = x1 - x2
+        diff = numpy.delete(diff, 0)
+        diff = numpy.delete(diff, len(diff)-1)
+        diff = numpy.insert(diff, len(diff)-1, inf)
+        return diff
+    def adhoc_branch_pruning(self, branch_data):
+        diff1 = self.difference(branch_data[2].imag) 
+        diff2 = self.difference(diff1) 
+        # Im S < 0のindex もcutした方が良いかも．
+        # ->
+        index = numpy.where(diff2 < 0)[0]
+        diff2 = diff2[index]
+        index = numpy.where(numpy.abs(diff2)<1e-5)[0] 
+        
+        if len(index) == 0: return []
+        full_index = numpy.arange(len(branch_data[2].imag))
+        cutoff_index = []
+        test = branch_data[2][index.max()].imag - branch_data[2][index.min()].imag
+        if test > 0: cutoff_index = numpy.where(full_index > index.min() )[0]
+        else: cutoff_index = numpy.where(full_index > index.max() )[0]
+        #if (isUpper == True):
+        #    cutoff_index = range(cutoff_index.min(),cutoff_index.max())
+        return cutoff_index
+
+    def get_semiwave(self, branch_data, qmin, qmax, pmin, pmax, hdim):
+        dp = (pmax - pmin)/hdim
+        h = (pmax - pmin)*(qmax - qmin)/hdim
+        semi_wave = numpy.zeros(hdim, numpy.complex128)
+        for i in range(hdim):
+            p = pmin + i*dp
+            index = numpy.where(numpy.abs(branch_data[1][1].real - p)<dp)[0]
+            weight = 0.0+0.0j
+            if len(index) > 0:
+                for j in index:
+                    weight += numpy.exp(twopi*1.j*(branch_data[2][j])/h)
+            semi_wave[i] = weight
+        return semi_wave
         
 
 class CompPathIntegration(object):
@@ -265,20 +328,5 @@ class CompPathIntegration(object):
     def diffirence(self):
         pass
 
-if __name__ == '__main__':
-    from MapSystem import *
-    map = ShudoStandard()
-    ms = BranchSearch(map, p=0.0, iter= 6)
-    data = ms.get_map(0.0, 1.0, -6.0, 6.0, 100, 300)
 
-
-    #import Gnuplot
-    #g = Gnuplot.Gnuplot(debug=1)
-    #g('set term x11')
-    #g('set term multiplot')
-#    for i in range(len(data)):
-#        print data[i]
-    #    g.plot(zip(data[i].real)
-    #import time
-    #time.sleep(100)
     
