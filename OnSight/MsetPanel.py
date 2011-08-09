@@ -96,8 +96,9 @@ class MsetPanel(_SubPanel):
             if result == wx.ID_OK:
                 self.SearchBranch()
                 self.SaveBranch()
-
+            print 'End Searching'
         def OnLoad(event):
+            if len(self.checklistindex2) != 0: self.InitializationCheckList2()
             import os
             home = os.environ['HOME']
             projpath = home + '/.onsight/%s/Mset/project' % (self.mapsystem.MapName)
@@ -138,16 +139,18 @@ class MsetPanel(_SubPanel):
                     isChain=False
                 else:
                     isChain=True
+                print isChain
                 branch = self.branchsearch.branch_data[i]
                 self.branchsearch.get_pruning_branch(branch,cut_pmin=-1.0, cut_pmax=1.0, isChain=isChain)
             self.DrawBranch(isDrawMset=False,marker='--', isDrawCutBranch=True)
-            self.DrawLset(isDrawMap=False, marker='--', isDrawCutBranch=True)
-            #self.DrawAction(marker)
+            self.DrawLset(isDrawMap=False, marker=',', isDrawCutBranch=True)
+            self.DrawAction(marker=',', isDrawCutBranch=True)
+            self.InitializationCheckList2()
+            self.UpdataCheckList2()
         def OnDrawCheckedContribution(event):
-            print self.checkedindex2
             try: self.wavepanel
             except AttributeError: self.wavepanel=parent.GetParent().MakePlotPanel('Momentam Rep. of Wave Function')
-            self.DrawWaveFunction(isEach)
+            self.DrawCheckedWaveFunction()
         def OnDrawSemiclassicalWave(event):
             try: self.wavepanel
             except AttributeError: self.wavepanel=parent.GetParent().MakePlotPanel('Momentam Rep. of Wave Function')
@@ -200,7 +203,10 @@ class MsetPanel(_SubPanel):
         self.actionplot.draw()
 
     def OnPress(self,xy):
-        if 'Branch0' not in self.checklistlabel1: self.GetRealBranch()
+        if 'Branch0' not in self.checklistlabel1:
+             self.GetRealBranch()
+             self.branchsearch.worm_start_point.insert(0,None)
+        print self.branchsearch.worm_start_point
         q = complex(xy[0] + 1.j*xy[1])
         self.GetBranch(q, isTest=True)
         self.DrawBranch()
@@ -215,18 +221,24 @@ class MsetPanel(_SubPanel):
         branch_sampling = float(wx.xrc.XRCCTRL(self.panel, 'TextCtrlBranchSample').GetValue())
         branches = self.branchsearch.branches
         self.branchsearch.branches = []
-        i = 1
+        i = 0
         for q in self.branchsearch.worm_start_point:
-            a = len(branches[i])/branch_sampling
-            self.GetBranch(q, a=a, isTest=False)
+            if q is not None:
+                a = len(branches[i])/branch_sampling
+                self.GetBranch(q, a=a, isTest=False)
             i+=1
         self.branchsearch.get_realbranch(branch_sampling)            
         self.branchsearch.worm_start_point = []
-    def GetBranch(self, q, wr=0.005, a=0, isTest=False):
+        self.DrawBranch(True)
+        self.DrawLset(False)
+        self.DrawAction()
+    def GetBranch(self, q, wr=0.001, a=0, isTest=False):
         if isTest:
             self.branchsearch.search_neary_branch(q,wr=wr, isTest=True)
         else:
-            self.branchsearch.get_branch(q, r=a*wr,isTest=False)
+            r = wr*a
+            if r <1e-8: r = 1-e7
+            self.branchsearch.get_branch(q, r=r,isTest=False)
     def GetMset(self):
         range = self.get_mset_range()
         self.mset_data = self.branchsearch.get_mset(range[0],range[1],range[2],range[3],range[4])
@@ -250,12 +262,16 @@ class MsetPanel(_SubPanel):
         self.msetplot.plot()
         for i in br_list:
             data = self.branchsearch.branches[i]
-            self.msetplot.replot(data.real, data.imag,marker)
-            self.msetplot.axes.annotate('%d' % (i) , xy=(data[len(data)/2].real, data[len(data)/2].imag),  xycoords='data',
+            if isDrawCutBranch:
+                cut_branch = self.branchsearch.cut_branches_data[i][0]
+                self.msetplot.replot(cut_branch.real, cut_branch.imag, '.')
+                self.msetplot.axes.annotate('%d' % (i) , xy=(cut_branch[len(cut_branch)/2].real, cut_branch[len(cut_branch)/2].imag),  xycoords='data',
                                          xytext=(-20, 20), textcoords='offset points', arrowprops=dict(arrowstyle="->"))
-        if isDrawCutBranch:
-            for branch in self.branchsearch.cut_branches_data:
-                self.msetplot.replot(branch[0].real, branch[0].imag, '.')
+                self.msetplot.replot(data.real, data.imag,marker=':',color='#AFAFAF')
+            else:
+                self.msetplot.replot(data.real, data.imag,marker)
+                self.msetplot.axes.annotate('%d' % (i) , xy=(data[len(data)/2].real, data[len(data)/2].imag),  xycoords='data',
+                                         xytext=(-20, 20), textcoords='offset points', arrowprops=dict(arrowstyle="->"))
         if isDrawMset: self.msetplot.replot(self.mset_data[0], self.mset_data[1],'k,')
         self.msetplot.draw()
     def DrawMset(self):
@@ -269,28 +285,41 @@ class MsetPanel(_SubPanel):
         else: index = self.checkedindex1
         for i in index:
             data = self.branchsearch.lset[i]
-            self.lsetplot.replot(data[0].real, data[1].real,marker)
-            self.lsetplot.axes.annotate('%d' % (i) , xy=(data[0][len(data[0])/2].real, data[1][len(data[1])/2].real),  xycoords='data',
+            if isDrawCutBranch:
+                cut_branch = self.branchsearch.cut_branches_data[i][1]
+                self.lsetplot.replot(cut_branch[0].real, cut_branch[1].real, '.')
+                self.lsetplot.axes.annotate('%d' % (i) , xy=(cut_branch[0][len(cut_branch[0])/2].real, cut_branch[1][len(cut_branch[1])/2].real),  xycoords='data',
                                             xytext=(-20, 20), textcoords='offset points', arrowprops=dict(arrowstyle="->"))
-        if isDrawCutBranch:
-            for branch in self.branchsearch.cut_branches_data:
-                self.lsetplot.replot(branch[1][0].real, branch[1][1].imag,'.')
-                
+                self.lsetplot.replot(data[0].real, data[1].real,color='#AFAFAF',linestyle='',marker=',')
+            else:
+                self.lsetplot.replot(data[0].real, data[1].real,marker)
+                self.lsetplot.axes.annotate('%d' % (i) , xy=(data[0][len(data[0])/2].real, data[1][len(data[1])/2].real),  xycoords='data',
+                                            xytext=(-20, 20), textcoords='offset points', arrowprops=dict(arrowstyle="->"))
         if isDrawMap:
             self.GetClMap()
             self.lsetplot.replot(self.mapdata[0],self.mapdata[1],color='#AFAFAF',linestyle='',marker=',')
         self.get_lset_range()
         self.lsetplot.draw()
-    def DrawAction(self, marker='.'):
+    def DrawAction(self, marker='.',isDrawCutBranch=False):
         self.actionplot.plot()
         if len(self.checkedindex1) == 0: index = range(len(self.branchsearch.action))
         else: index = self.checkedindex1
         for i in index:
             action = self.branchsearch.action[i]
             lset = self.branchsearch.lset[i]
-            self.actionplot.replot(lset[1].real, action.imag, marker)
-            self.actionplot.axes.annotate('%d' % (i) , xy=(lset[1][len(lset[1])/2].real, action[len(action)/2].imag),  xycoords='data',
+            if isDrawCutBranch:
+                cut_action = self.branchsearch.cut_branches_data[i][2]
+                cut_lsetp = self.branchsearch.cut_branches_data[i][1][1]
+                self.actionplot.replot(cut_lsetp.real, cut_action.imag, '.')
+                self.actionplot.axes.annotate('%d' % (i) , xy=(cut_lsetp[len(cut_lsetp)/2].real, cut_action[len(cut_action)/2].imag),  xycoords='data',
+                                            xytext=(-20, 20), textcoords='offset points', arrowprops=dict(arrowstyle="->"))
+            else:
+                self.actionplot.replot(lset[1].real, action.imag, marker)
+                self.actionplot.axes.annotate('%d' % (i) , xy=(lset[1][len(lset[1])/2].real, action[len(action)/2].imag),  xycoords='data',
                                           xytext=(-20, 20), textcoords='offset points', arrowprops=dict(arrowstyle="->"))
+        #if isDrawCutBranch:
+        #    for branch in self.branchsearch.cut_branches_data:
+        #        self.actionplot.replot(branch[1][1].real,branch[2].imag,'.')
         self.get_action_range()
         self.actionplot.draw()
     def get_mset_range(self):
@@ -336,14 +365,15 @@ class MsetPanel(_SubPanel):
         self.wavepanel.axes.semilogy()
         self.wavepanel.ylim = (ymin, ymax)    
         self.wavepanel.xlim = (range[2], range[3])
-        print self.wavepanel.xlim, self.wavepanel.ylim
         self.wavepanel.setlim()
     def Initialization(self):
         self.branchsearch = maps.CompPathIntegration.BranchSearch(self.map, self.initial_p, self.iteration)
         self.branchsearch.Psetting = self.Psetting
         self.InitializationCheckList()
+        self.InitializationCheckList2()
         self.lsetplot.clear()
         self.msetplot.clear()
+        self.actionplot.clear()
         self.GetMset()
         self.DrawMset()
         wx.xrc.XRCCTRL(self.panel,'StaticTextPreference').SetLabel('Preference: iteration=%d, p_0 = %.2f' % (self.iteration,self.initial_p))
@@ -367,6 +397,12 @@ class MsetPanel(_SubPanel):
         self.checklistindex1 = []
         self.checklistlabel1 = []
         self.checkedindex1 = []
+    def InitializationCheckList2(self):
+        for i in range(len(self.checklistindex2)):
+            self.checklistbranch2.Delete(0)
+        self.checklistindex2 = []
+        self.checklistlabel2 = []
+        self.checkedindex2   = []
     def UpdataCheckList(self):
         for i in range(len(self.branchsearch.branches)):
             self.checklistindex1.append(i)
@@ -419,12 +455,28 @@ class MsetPanel(_SubPanel):
             self.branchsearch.branch_data.append(branch)
 
         self.UpdataCheckList()
-        self.UpdataCheckList2()
         self.DrawBranch(not self.checkedbranchonly)
         self.DrawLset(not self.checkedlsetonly)
         self.DrawAction()
-    def DrawWaveFunction(self, isSum):
-        print len(self.branchsearch.cut_branches_data)
+    def DrawCheckedWaveFunction(self):
+        range = self.get_qmap_range()
+        self.wavepanel.plot()
+        p = numpy.arange(range[2], range[3], (range[3]- range[2])/range[4])
+        for index in self.checkedindex2:
+            branch_data = self.branchsearch.cut_branches_data[index]
+            semiwave = self.branchsearch.get_semiwave(branch_data, range[0],range[1], range[2],range[3], range[4])
+            abs_swave = numpy.abs(semiwave)**2/numpy.sum(numpy.abs(semiwave)**2)
+            self.wavepanel.replot(p, abs_swave)
+            ann_index1 = set(numpy.where(abs_swave < 1e-8)[0])
+            ann_index2 = set(numpy.where(abs_swave > 1e-16)[0])
+            ann_index3 = list(ann_index1.intersection(ann_index2))
+            ann_index3.sort()
+            if len(ann_index3) == 0 : ann_index = int(range[4]/2)
+            else: ann_index = int((ann_index3[len(ann_index3)-1] - ann_index3[0])/2)
+            self.wavepanel.axes.annotate('%d' % (index) , xy=(branch_data[1][1][range[4]/2].real, abs_swave[range[4]/2]),  xycoords='data',
+                                                          xytext=(-20, 20), textcoords='offset points', arrowprops=dict(arrowstyle="->"))
+        self.set_semiwave_range()
+        self.wavepanel.draw()
     def GetSemiclassicalWaveFunction(self):
         branch_data = []
         branch = numpy.array([],dtype=numpy.complex128)
@@ -432,7 +484,6 @@ class MsetPanel(_SubPanel):
         lsetp  = numpy.array([],dtype=numpy.complex128)
         action = numpy.array([],dtype=numpy.complex128)
         for index in self.checkedindex2:
-            print index
             branch = numpy.append(branch, self.branchsearch.cut_branches_data[index][0])
             lsetq  = numpy.append(lsetq, self.branchsearch.cut_branches_data[index][1][0])
             lsetp  = numpy.append(lsetp, self.branchsearch.cut_branches_data[index][1][1])

@@ -118,9 +118,9 @@ class BranchSearch(object):
             file.close()
         
 
-    def search_neary_branch(self, x, r=1e-4, wsample=100, wr=1e-4, wsamplemax =1e4, isTest=False):
+    def search_neary_branch(self, x, r=1e-3, wsample=100, wr=1e-4, wsamplemax =1e4, isTest=False):
         self.isTest=isTest
-        if isTest: wr ,wsample, wsamplemax = 0.005, 100, 1e4
+        #if isTest: wr ,wsample, wsamplemax = 0.001, 100, 1e4
         while True:
             circle = self.make_circle(x,r)
             index = self.where_sign_inversion(circle, self.p, self.iter)
@@ -130,6 +130,13 @@ class BranchSearch(object):
         section = self.bisection(circle[index[0]-1], circle[index[0]], self.p, self.iter)
         self.worm_start_point.append(section)
         self.get_branch(section, wsample, wr, wsamplemax, isTest=isTest)
+        n=1.0
+        while len(self.branches[len(self.branches)-1]) < 10:
+            if n < 1e-5:
+                raise ValueError
+            n = n*0.1
+            self.branches.pop()
+            self.get_branch(section, wsample, wr*n, 1e5, isTest=isTest)
         
     def get_branch(self, start_point, sample=100, r = 0.0001, sample_max=1e5, isTest=False):
         self.isTest=isTest
@@ -149,7 +156,7 @@ class BranchSearch(object):
         worming_number = halve = ch_sam = 0 # for counter
         branch = numpy.array([])
 
-        while r2 > 1e-5 and sample < sample_max :
+        while r2 > 1e-8 and sample < sample_max :
             d = numpy.abs(p1 - p2)
             beta = numpy.arccos((r2**2 + d**2 - r1**2) / (2.0*r2*d ) ) # Low of cosines
             alpha = numpy.angle(p2 - p1) # argument
@@ -172,11 +179,10 @@ class BranchSearch(object):
                 if worming_number % 100 == 0 or ch_sam !=0:
                     print '%dth worm:(r,sample)=(%f,%d)' % (worming_number, r2, sample),\
                     '|[Im(P_n)]|~%.0e' % numpy.abs(data[1][index-1].imag - data[1][index].imag)
-                if self.isTest and worming_number > 300: break 
-
+                if self.isTest and worming_number > 5000: break 
             ch_sam = 0
+
         return branch 
-        
 
     def get_branch_section(self, y, iter, center, radius, intersection=1):
         if intersection not in [1,2]: raise ValueError, 'intersection = 1 or 2'
@@ -216,6 +222,7 @@ class BranchSearch(object):
                 x1 = xm
             else:
                 x2 = xm
+        xm = (x1 + x2)/2.0
         return xm
     def evolves(self, x, y ,iter, isPeriod=False):
         y = numpy.array([y for i in range(len(x)) ])
@@ -248,7 +255,8 @@ class BranchSearch(object):
             data[1].append(numpy.array(ms.Trajectory[i]).transpose()[1])
         return data
 
-    def get_pruning_branch(self, branch_data, cut_pmin=-1.0, cut_pmax=1.0, isChain=False):
+    def get_pruning_branch(self, branch_data, cut_pmin=-10.0, cut_pmax=10.0, isChain=False):
+        import pylab
         if numpy.sum(numpy.abs(branch_data[2].imag) < 1e-16) == len(branch_data[2].imag):
             index = numpy.arange(len(branch_data[2].imag))
             #import pylab
@@ -258,10 +266,11 @@ class BranchSearch(object):
         elif isChain :
             index = self.adhoc_branch_pruning(branch_data)
         else:
-            count = 0.0
+            count = 0
             index = []
             for x in branch_data[1][1].real:
-                if x > cut_pmin and x < cut_pmax and branch_data[2][count].imag >= 0:
+                #if x > cut_pmin and x < cut_pmax and branch_data[2][count].imag >= 0:
+                if branch_data[2][count].imag >= 0.0:
                     index.append(count)
                 count += 1
         self.cut_branches_data.append([branch_data[0][index], [branch_data[1][0][index], branch_data[1][1][index]], branch_data[2][index]])
