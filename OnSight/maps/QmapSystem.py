@@ -19,6 +19,7 @@ class PhaseSpace2d(object):
         info = {'qmin' : self.range[0][0], 'qmax': self.range[0][1],
                 'pmin' : self.range[1][0], 'pmax': self.range[1][1],
                 'h': self.h, 'hdim' : self.hdim }
+        return info
 class Hole(PhaseSpace2d):
     def __init__(self, bsetting):
         self.bsetting = bsetting
@@ -29,7 +30,7 @@ class Perturbation(PhaseSpace2d):
     def __init__(self, persetting):
         self.persetting = persetting
         # example
-        persetting = [ (False, []), (True, [-0.5, 0.5]) ]
+        persetting = [ 'noise', (False, []), (True, [-0.5, 0.5]) ]
 
 
 class WaveFunction(PhaseSpace2d):
@@ -71,6 +72,7 @@ class WaveFunction(PhaseSpace2d):
     def quantized_linear_tori(self, p_c):
         # see peper written by ishikawa ( Recovery of chaotic tunneling due to destruction of dynamical localization by external noise)
         pass
+
 class Representation(PhaseSpace2d):
     def __init__(self, range, hdim):
         PhaseSpace2d.__init__(self, range, hdim)
@@ -87,7 +89,7 @@ class PhaseSpaceRep(Representation):
     def set_vrange(self, vrange, grid):
         self.vrange = vrange
         self.grid = grid
-    def hsm_rep(self, target):
+    def hsm_rep(self, terget):
         cs_dq = (self.vrange[0][1] - self.vrange[0][0]) / self.grid[0]
         cs_dp = (self.vrange[1][1] - self.vrange[1][0]) / self.grid[1]
         hsm_img = numpy.zeros((self.grid[0], self.grid[1]))
@@ -96,27 +98,46 @@ class PhaseSpaceRep(Representation):
                 cs_p = self.vrange[1][0] + i*cs_dp
                 cs_q = self.vrange[0][0] + j*cs_dq
                 cs_vec = self.wave.cs_qvec(cs_q, cs_p)
-                sum = numpy.sum(target*numpy.conj(cs_vec)) 
+                sum = numpy.sum(terget*numpy.conj(cs_vec)) 
                 hsm_img[i][j] = numpy.abs(sum) * numpy.abs(sum)
         return hsm_img
     def wigner_rep(self):
         pass
+
 class Qmap(PhaseSpace2d):
-    def __init__(self, map, range, hdim):
+    def __init__(self, map):
+        if isinstance(map, Symplectic2d) != True: raise TypeError
+        try:
+            setting = map.Psetting
+            self.range=[]
+            for set in setting:
+                if set[0]: self.range.append((0.0, set[1]))
+                else: self.range.append((0.0, 1.0))
+        except: self.range = [(0.0, 1.0), (0.0, 1.0)]
+        try: self.Bsetting = map.Bsetting
+        except: self.Bsetting = None
+
         self.map = map
-        PhaseSpace2d.__init__(self, range, hdim)
-        self.rep = PhaseSpaceRep(range, hdim)
-        self.rep.set_vrange(range,(50,50))
-    def set_state(self, x_c, p_c, state):
+        self.hdim = 100
+        PhaseSpace2d.__init__(self, self.range, self.hdim)
+        self.QMapName = map.__class__.__name__
+        
+        self.vecs = []
+        self.ivec = None
+        self.fvec = None
+        
+        self.vrange = self.range
+        self.grid = (50, 50)
+        self.rep = PhaseSpaceRep(self.range, self.hdim)
+        self.rep.set_vrange(self.range, (50,50))
+    def set_state(self, state, *args):
         self.wave = WaveFunction(self.range, self.hdim)
-        print x_c, p_c,state
-        if state in ('q'): self.ivec = self.wave.del_q(x_c)
+        if state in ('q'): self.ivec = self.wave.del_q(args[0])
         elif state in ('p'): pass #self.wave.del_p(p_c)
-        elif state in ('cs'): self.ivec = self.wave.cs_qvec(x_c,p_c)
+        elif state in ('cs'): self.ivec = self.wave.cs_qvec(args[0], args[1])
         elif state in ('qlt'): pass
         else: raise TypeError
     def free_operator(self, isShift=True):
-        print self.range, self.hdim, self.h
         if isShift:
             sp = numpy.fft.fftshift(self.p)
             tfunc = self.map.ifunc1(sp)
@@ -130,86 +151,58 @@ class Qmap(PhaseSpace2d):
         else:
             vfunc = self.map.ifunc0(self.q)
         return numpy.exp(-towpi*1.j*vfunc /self.h)
-    def evolve(self):
+    def evolve(self, iter, dt=1, TimeLine=True):
+        #if self.Bsetting
+        evol = self._evolve
+        invec = self.ivec
+        print TimeLine, dt
+        for i in range(iter):
+            if TimeLine and i%dt == 0:
+                self.vecs.append(invec)
+            outvec = evol(invec)
+            invec = outvec
+        self.fvec = outvec
+    def _evolve(self, in_vec):
         freeop = self.free_operator(isShift=True)
         kickop = self.kick_operator(isShift=False)
-        vec1 = kickop * self.ivec
-        vec2 = numpy.fft.fft(vec1)
-        vec1 = freeop * vec2
-        vec2 = numpy.fft.ifft(vec1)
-        return vec2
+        vec1 = kickop * in_vec
+        out_vec = numpy.fft.fft(vec1)
+        vec1 = freeop * out_vec
+        self.fvec = numpy.fft.ifft(vec1)
+        return self.fvec
+    def _evolve_opne(self):
+        pass
+    def _evolve_perturb(self):
+        pass
     def eigen_val(self):
         pass
         print self.range
-    def set_range(self, range, hdim):
-        self.range = range
+    def set_range(self, qmin, qmax, pmin, pmax, hdim):
+        self.range = [(qmin, qmax), (pmin, pmax)]
         self.hdim = hdim
         self.h = (self.range[0][1] - self.range[0][0]) * (self.range[1][1] - self.range[1][0])/float(self.hdim)
         self.q = numpy.arange(self.range[0][0], self.range[0][1], (self.range[0][1] - self.range[0][0])/self.hdim)
         self.p = numpy.arange(self.range[1][0], self.range[1][1], (self.range[1][1] - self.range[1][0])/self.hdim)
     def get_range(self):
         return self.range, self.hdim
-    def set_vrange(self, vrange, grid):
-        self.rep.set_vrange(vrange, grid)
+    def set_vrange(self, vqmin, vqmax, vpmin, vpmax, col, row):
+        self.vrange = [(vqmin, vqmax), (vpmin, vpmax)]
+        self.grid = (col, row)
     def husimi_rep(self, target):
-        return self.rep.hsm_rep(target)
-        
-class QmapSystem(object):
-    def __init__(self, map):
-        if isinstance(map, Symplectic2d) != True: raise TypeError
-        self.map = map
-        self.hdim = 100
-        self.QMapName = map.__class__.__name__
-        try:
-            setting = self.map.Psetting
-            self.range=[]
-            for set in setting:
-                if set[0]: self.range.append((0.0, set[1]))
-                else: self.range.append((0.0, 1.0))
-        except: self.range = [(0.0, 1.0), (0.0, 1.0)]
-        try: self.Bsetting = self.map.Bsetting
-        except: self.Bsetting = None
-        self.qmap = Qmap(self.map, self.range, self.hdim)
-    def set_range(self, qmin, qmax, pmin, pmax, hdim):
-        self.range = [(qmin, qmax), (pmin, pmax)]
-        self.hdim = hdim
-        self.qmap.set_range(self.range, hdim)
- 
-    def set_inipacket(self, state, *args):
-        if type(state) != str: raise ValueError
-        if state in ('q') and len(args) == 1:
-            self.qmap.set_state(args[0], None, 'q')
-        elif state in ('p') and len(args) == 1:
-            self.qmap.set_state(None, args[0], 'p')
-        elif state in ('cs') and len(args) == 2:
-            print len(args)
-            self.qmap.set_state(args[0], args[1], 'cs')
-        else: raise ValueError
-    def evolves(self, iter, dt):
-        self.qmap.evolve()
-    def get_prep(self):
-        pass
-    def get_qrep(self):
-        pass
-    def get_hsm_rep(self):
-        pass
-    def test(self):
-        self.set_inipacket('cs',0.5, 0.5)
-        x = numpy.arange(0.0,1.0,1.0/50)
-        y = numpy.arange(0.0,1.0,1.0/50)
-        X, Y = numpy.meshgrid(x,y)
-        self.qmap.set_vrange([(0.0,1.0),(0.0, 1.0)], (50, 50))
-        hsm_data = self.qmap.husimi_rep(self.qmap.ivec)
+        self.rep = PhaseSpaceRep(self.range, self.hdim)
+        self.rep.set_vrange(self.vrange, self.grid)
+        hsm_data = self.rep.hsm_rep(target)
+        import pylab
         from mpl_toolkits.mplot3d import Axes3D
-        self.fig = pylab.figure()
-        ax = Axes3D(self.fig)        
+        x = numpy.arange(self.rep.vrange[0][0], self.rep.vrange[0][1], (self.rep.vrange[0][1] - self.rep.vrange[0][0])/self.rep.grid[0])
+        y = numpy.arange(self.rep.vrange[1][0], self.rep.vrange[1][1], (self.rep.vrange[1][1] - self.rep.vrange[1][0])/self.rep.grid[1])
+        X, Y = numpy.meshgrid(x, y)
+        fig = pylab.figure()
+        ax = Axes3D(fig)        
         ax.plot_wireframe(X, Y, hsm_data)
         pylab.show()
 
-        
+
         
 if __name__ == '__main__':
-    map = StandardMap(k=2.7)
-    #Space(2, False)x
-    qmap = QmapSystem(map)
-    qmap.test()
+    import qmap_test
