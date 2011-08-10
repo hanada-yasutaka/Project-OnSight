@@ -135,15 +135,15 @@ class MsetPanel(_SubPanel):
                 self.checkedindex2.remove(index)
             self.checkedindex2.sort()
             if len(self.checkedindex2) == 1:
-                print self.checkedindex2[0]
                 branch = self.branchsearch.branch_data[self.checkedindex2[0]]
-                cbranch = self.branchsearch.cut_branches_data[self.checkedindex2[0]]
+                cut_index = self.branchsearch.cut_index[self.checkedindex2[0]]
                 wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').Enable(True)
                 wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(True)
                 wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').SetMax(int( len(branch[0]) -1 ))
                 #wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetMin(int( len(branch[0])/2 +1 ))
                 wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetMax(int( len(branch[0]) - 1 ))
-                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetValue(int( len(branch[0])-1 ))
+                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').SetValue(cut_index.min())
+                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetValue(cut_index.max())
             else:
                 wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(False)
                 wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').Enable(False)
@@ -195,7 +195,6 @@ class MsetPanel(_SubPanel):
         def OnSliderPruning(event):
             index_min = int(wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_min').GetValue())
             index_max = int(wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_max').GetValue())
-            print index_min, index_max
             if index_max > index_min:
                 self.branchsearch.hand_branch_pruning(index_min ,index_max, self.checkedindex2[0])
             else:
@@ -306,7 +305,6 @@ class MsetPanel(_SubPanel):
         elif isDrawCutBranch=='EACH': br_list = self.checkedindex2
         elif len(self.checkedindex1) == 0: br_list = range(len(self.branchsearch.branches))
         else: br_list = self.checkedindex1
-        print br_list
         self.msetplot.plot()
         for i in br_list:
             data = self.branchsearch.branches[i]
