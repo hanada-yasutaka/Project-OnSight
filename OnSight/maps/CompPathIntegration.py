@@ -295,20 +295,7 @@ class BranchSearch(object):
 
         if len(index) == 0: cutoff_index = []
         else: cutoff_index = numpy.where(branch_data[2].imag > branch_data[2][index.min()].imag)[0]
-        #full_index = numpy.arange(len(branch_data[2].imag))
-        #cutoff_index = []
-        #test = branch_data[2][index.max()].imag - branch_data[2][index.min()].imag
-        #print test
-        #if test > 0: cutoff_index = numpy.where(full_index > index.min() )[0]
-        #else: cutoff_index = numpy.where(full_index > index.max() )[0]
-        #pylab.plot(branch_data[1][1].real, branch_data[2].imag,':')
-        #pylab.plot(branch_data[1][1][index.max()].real, branch_data[2][index.max()].imag,'or',markersize=10)
-        #pylab.plot(branch_data[1][1][index.min()].real, branch_data[2][index.min()].imag,'ob',markersize=10)
-        #pylab.plot(branch_data[1][1][index].real, branch_data[2][index].imag,'og')
-        #pylab.plot(branch_data[1][1][cutoff_index].real, branch_data[2][cutoff_index].imag,'.')
-        #pylab.show()
-        #if (isUpper == True):
-        #    cutoff_index = range(cutoff_index.min(),cutoff_index.max())
+
         return cutoff_index
 
     def get_semiwave(self, branch_data, qmin, qmax, pmin, pmax, hdim):
