@@ -134,10 +134,14 @@ class MsetPanel(_SubPanel):
             else:
                 self.checkedindex2.remove(index)
             self.checkedindex2.sort()
-            print self.checkedindex2
             if len(self.checkedindex2) == 1:
-                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(True)
+                print self.checkedindex2[0]
+                branch = self.branchsearch.cut_branches_data[self.checkedindex2[0]]
                 wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').Enable(True)
+                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(True)
+                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').SetMax(int( len(branch[0])/2 ))
+                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetMin(int( len(branch[0])/2 +1 ))
+                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetMax(int( len(branch[0]) - 1 ))
             else:
                 wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(False)
                 wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').Enable(False)
@@ -185,11 +189,14 @@ class MsetPanel(_SubPanel):
             except AttributeError: self.wavepanel=parent.GetParent().MakePlotPanel('Momentam Rep. of Wave Function')
             self.GetSemiclassicalWaveFunction()
         
-        def OnSliderPruningMax(event):
-            print self.checkedindex2
-            print wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_max').GetValue()
-        def OnSliderPruningMin(event):
-            print wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_min').GetValue()
+        def OnSliderPruning(event):
+            index_min = int(wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_min').GetValue())
+            index_max = int(wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_max').GetValue())
+            print index_min, index_max
+            self.branchsearch.hand_branch_pruning(index_min ,index_max, self.checkedindex2[0])
+            self.msetplot.clear()
+            self.DrawBranch(isDrawMset=not self.checkedbranchonly, isDrawCutBranch='EACH')
+        
         
         if wx.Platform != '__WXMAC__':
             self.Bind(wx.EVT_SPINCTRL,OnSpinCtrlIteration, wx.xrc.XRCCTRL(self.panel, 'SpinCtrlIteration'))
@@ -234,8 +241,8 @@ class MsetPanel(_SubPanel):
         self.Bind(wx.EVT_BUTTON, OnDrawSemiclassicalWave, wx.xrc.XRCCTRL(self.panel, 'ButtonDrawSemiclassicalWave'))
         
         #
-        self.Bind(wx.EVT_SLIDER, OnSliderPruningMin, wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_min'))
-        self.Bind(wx.EVT_SLIDER, OnSliderPruningMax, wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_max'))
+        self.Bind(wx.EVT_SLIDER, OnSliderPruning, wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_min'))
+        self.Bind(wx.EVT_SLIDER, OnSliderPruning, wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_max'))
         self.branch_or_chain = 0
         self.GetMset()
         self.DrawMset()
@@ -290,9 +297,11 @@ class MsetPanel(_SubPanel):
         self.checklistlabel1.append('Branch0')
         self.checklistindex1.append(0)
     def DrawBranch(self, isDrawMset=True,marker='.',isDrawCutBranch=False):
-        if len(self.checkedindex1) == 0: br_list = range(len(self.branchsearch.branches))
-        elif isDrawCutBranch=='ALL': br_list = range(len(self.checklistindex1))
+        if isDrawCutBranch=='ALL': br_list = range(len(self.checklistindex1))
+        elif isDrawCutBranch=='EACH': br_list = self.checkedindex2
+        elif len(self.checkedindex1) == 0: br_list = range(len(self.branchsearch.branches))
         else: br_list = self.checkedindex1
+        print br_list
         self.msetplot.plot()
         for i in br_list:
             data = self.branchsearch.branches[i]
