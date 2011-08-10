@@ -297,7 +297,13 @@ class BranchSearch(object):
         else: cutoff_index = numpy.where(branch_data[2].imag > branch_data[2][index.min()].imag)[0]
 
         return cutoff_index
-
+    def hand_branch_pruning(self, start, end, th):
+        index = numpy.arange(start, end)
+        branch_data = self.branch_data[th]
+        branch = branch_data[0][index]
+        lset = [branch_data[1][0][index], branch_data[1][1][index]]
+        action = branch_data[2][index]
+        self.cut_branches_data[th] = [branch, lset, action]
     def get_semiwave(self, branch_data, qmin, qmax, pmin, pmax, hdim):
         dp = (pmax - pmin)/hdim
         h = (pmax - pmin)*(qmax - qmin)/hdim
