@@ -38,6 +38,7 @@ class MsetPanel(_SubPanel):
         self.mapdata = [] 
         self.checkedbranchonly = False
         self.checkedlsetonly = True
+        self.load_branch_num = 0
         ### Creating PlotPanel,
         # move plot panel to under other plot panel after last modified 
         self.msetplot = parent.GetParent().MakePlotPanel('set M')
@@ -97,6 +98,8 @@ class MsetPanel(_SubPanel):
                 self.SearchBranch()
                 self.SaveBranch()
             print 'End Searching'
+            #path = os.environ['HOME'] + '/.onsight/%s/Mset/project' % (self.mapsystem.MapName)
+            #self.loadBranch(path)
         def OnLoad(event):
             if len(self.checklistindex2) != 0: self.InitializationCheckList2()
             import os
@@ -112,6 +115,7 @@ class MsetPanel(_SubPanel):
                 proj = []
                 for line in file:
                     proj.append(line)
+                file.close()
                 self.LoadBranch(proj)
             dlg.Destroy()
         def OnCheckList2Branch(event):
@@ -136,12 +140,11 @@ class MsetPanel(_SubPanel):
             count = 0
             for i in index:
                 if i in self.checkedindex1:
-                    isChain=False
-                else:
                     isChain=True
-                print isChain
+                else:
+                    isChain=False
                 branch = self.branchsearch.branch_data[i]
-                self.branchsearch.get_pruning_branch(branch,cut_pmin=-1.0, cut_pmax=1.0, isChain=isChain)
+                self.branchsearch.get_pruning_branch(branch,cut_pmin=-7.0, cut_pmax=7.0, isChain=isChain)
             self.DrawBranch(isDrawMset=False,marker='--', isDrawCutBranch=True)
             self.DrawLset(isDrawMap=False, marker=',', isDrawCutBranch=True)
             self.DrawAction(marker=',', isDrawCutBranch=True)
@@ -206,13 +209,12 @@ class MsetPanel(_SubPanel):
         if 'Branch0' not in self.checklistlabel1:
              self.GetRealBranch()
              self.branchsearch.worm_start_point.insert(0,None)
-        print self.branchsearch.worm_start_point
         q = complex(xy[0] + 1.j*xy[1])
         self.GetBranch(q, isTest=True)
         self.DrawBranch()
-        self.checklistbranch1.Append('Branch%3d' % (len(self.branchsearch.branches)-1))
-        self.checklistlabel1.append('Branch%d' % (len(self.branchsearch.branches)-1))
-        self.checklistindex1.append((len(self.branchsearch.branches)-1))
+        self.checklistbranch1.Append('Branch%3d' % (len(self.branchsearch.worm_start_point) - 1) )
+        self.checklistlabel1.append('Branch%d' % (len(self.branchsearch.worm_start_point)-1) )
+        self.checklistindex1.append((len(self.branchsearch.worm_start_point)-1))
         self.GetLset()
         self.DrawLset()
         self.GetAction()
@@ -258,6 +260,7 @@ class MsetPanel(_SubPanel):
         self.checklistindex1.append(0)
     def DrawBranch(self, isDrawMset=True,marker='.',isDrawCutBranch=False):
         if len(self.checkedindex1) == 0: br_list = range(len(self.branchsearch.branches))
+        elif isDrawCutBranch: br_list = range(len(self.checklistindex1))
         else: br_list = self.checkedindex1
         self.msetplot.plot()
         for i in br_list:
@@ -282,6 +285,7 @@ class MsetPanel(_SubPanel):
     def DrawLset(self, isDrawMap=False,marker='.',isDrawCutBranch=False):
         self.lsetplot.plot()
         if len(self.checkedindex1) == 0: index = range(len(self.branchsearch.lset))
+   #     elif isDrawCutBranch : index = range(len(self.checklistindex1))
         else: index = self.checkedindex1
         for i in index:
             data = self.branchsearch.lset[i]
@@ -303,6 +307,7 @@ class MsetPanel(_SubPanel):
     def DrawAction(self, marker='.',isDrawCutBranch=False):
         self.actionplot.plot()
         if len(self.checkedindex1) == 0: index = range(len(self.branchsearch.action))
+    #    elif isDrawCutBranch: index = range(len(self.checklistindex1))
         else: index = self.checkedindex1
         for i in index:
             action = self.branchsearch.action[i]
@@ -381,7 +386,7 @@ class MsetPanel(_SubPanel):
         count = 0
         self.checkedindex1.sort()
         for i in self.checkedindex1:
-            self.branchsearch.worm_start_point.pop(i-count - 1)
+            self.branchsearch.worm_start_point.pop(i-count)
             self.branchsearch.lset.pop(i-count)
             self.branchsearch.action.pop(i-count)
             self.branchsearch.branches.pop(i-count)
@@ -404,7 +409,7 @@ class MsetPanel(_SubPanel):
         self.checklistlabel2 = []
         self.checkedindex2   = []
     def UpdataCheckList(self):
-        for i in range(len(self.branchsearch.branches)):
+        for i in range(len(self.branchsearch.worm_start_point)):
             self.checklistindex1.append(i)
             self.checklistlabel1.append('Branch%d' % i)
             self.checklistbranch1.Append('Branch%3d' % i)
@@ -413,11 +418,13 @@ class MsetPanel(_SubPanel):
         self.DrawAction()
 
     def UpdataCheckList2(self):
-        for i in range(len(self.branchsearch.branches)):
+        for i in range(len(self.branchsearch.cut_branches_data)):
             self.checklistindex2.append(i)
             self.checklistlabel2.append('Branch%d' % i)
             self.checklistbranch2.Append('Branch%3d' % i)
- 
+            if len(self.branchsearch.cut_branches_data[i]) != 0:
+                 pass
+                #to do checklistbranch2.Enable(False)
     def SaveBranch(self):
         import os
         home = os.environ['HOME']
@@ -425,7 +432,7 @@ class MsetPanel(_SubPanel):
         datapath = home + '/.onsight/%s/Mset/data/p0_%.1f/step%d' % (self.mapsystem.MapName, self.initial_p, self.iteration)
         if os.path.exists(datapath) == False:
             os.makedirs(datapath)
-        self.branchsearch.save_branch(datapath)
+        self.branchsearch.save_branch(self.load_branch_num, datapath)
         
         projpath = home + '/.onsight/%s/Mset/project' % (self.mapsystem.MapName)
         if os.path.exists(projpath) == False:
@@ -445,6 +452,7 @@ class MsetPanel(_SubPanel):
         
         self.Initialization()
         branch_list = glob.glob(datapath)
+        self.load_branch_num = len(branch_list) 
         sort_nicely(branch_list)
         for branch in branch_list:
             data = numpy.loadtxt('%s' % branch ).transpose()
@@ -453,6 +461,7 @@ class MsetPanel(_SubPanel):
             self.branchsearch.action.append(data[7] + 1.j*data[8])
             branch = [ data[1]+1.j*data[2], [ data[3]+1.j*data[5], data[4]+1.j*data[6] ], data[7]+1.j*data[8] ]
             self.branchsearch.branch_data.append(branch)
+            self.branchsearch.worm_start_point.append(None)
 
         self.UpdataCheckList()
         self.DrawBranch(not self.checkedbranchonly)

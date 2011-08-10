@@ -97,12 +97,12 @@ class BranchSearch(object):
                 qp0 = qp1
             self.action.append(S)
         
-    def save_branch(self, path):
+    def save_branch(self, th, path):
         import os
         self.get_lset()
         self.get_action()
         for i in range(len(self.branches)):
-            filename = '%s/Branch%s.dat' % (path, i)
+            filename = '%s/Branch%s.dat' % (path, i+th)
         #    if os.path.isfile(path) != True: raise TypeError
             index = range(len(self.branches[i]))
             data = numpy.array([index,
@@ -285,20 +285,28 @@ class BranchSearch(object):
         diff = numpy.insert(diff, len(diff)-1, inf)
         return diff
     def adhoc_branch_pruning(self, branch_data):
-        diff1 = self.difference(branch_data[2].imag) 
-        diff2 = self.difference(diff1) 
-        # Im S < 0のindex もcutした方が良いかも．
-        # ->
-        index = numpy.where(diff2 < 0)[0]
-        diff2 = diff2[index]
-        index = numpy.where(numpy.abs(diff2)<1e-5)[0] 
-        
-        if len(index) == 0: return []
-        full_index = numpy.arange(len(branch_data[2].imag))
-        cutoff_index = []
-        test = branch_data[2][index.max()].imag - branch_data[2][index.min()].imag
-        if test > 0: cutoff_index = numpy.where(full_index > index.min() )[0]
-        else: cutoff_index = numpy.where(full_index > index.max() )[0]
+        import pylab
+        diff1 = self.difference(branch_data[2].imag)
+        diff_p= self.difference(branch_data[1][1].real)
+        diff2 = self.difference(diff1)
+        diff = diff2/diff_p/diff_p
+
+        index = numpy.where(numpy.abs(diff)<1e-2)[0] 
+
+        if len(index) == 0: cutoff_index = []
+        else: cutoff_index = numpy.where(branch_data[2].imag > branch_data[2][index.min()].imag)[0]
+        #full_index = numpy.arange(len(branch_data[2].imag))
+        #cutoff_index = []
+        #test = branch_data[2][index.max()].imag - branch_data[2][index.min()].imag
+        #print test
+        #if test > 0: cutoff_index = numpy.where(full_index > index.min() )[0]
+        #else: cutoff_index = numpy.where(full_index > index.max() )[0]
+        #pylab.plot(branch_data[1][1].real, branch_data[2].imag,':')
+        #pylab.plot(branch_data[1][1][index.max()].real, branch_data[2][index.max()].imag,'or',markersize=10)
+        #pylab.plot(branch_data[1][1][index.min()].real, branch_data[2][index.min()].imag,'ob',markersize=10)
+        #pylab.plot(branch_data[1][1][index].real, branch_data[2][index].imag,'og')
+        #pylab.plot(branch_data[1][1][cutoff_index].real, branch_data[2][cutoff_index].imag,'.')
+        #pylab.show()
         #if (isUpper == True):
         #    cutoff_index = range(cutoff_index.min(),cutoff_index.max())
         return cutoff_index
