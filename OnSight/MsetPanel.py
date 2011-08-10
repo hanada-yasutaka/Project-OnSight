@@ -136,12 +136,14 @@ class MsetPanel(_SubPanel):
             self.checkedindex2.sort()
             if len(self.checkedindex2) == 1:
                 print self.checkedindex2[0]
-                branch = self.branchsearch.cut_branches_data[self.checkedindex2[0]]
+                branch = self.branchsearch.branch_data[self.checkedindex2[0]]
+                cbranch = self.branchsearch.cut_branches_data[self.checkedindex2[0]]
                 wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').Enable(True)
                 wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(True)
-                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').SetMax(int( len(branch[0])/2 ))
-                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetMin(int( len(branch[0])/2 +1 ))
+                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').SetMax(int( len(branch[0]) -1 ))
+                #wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetMin(int( len(branch[0])/2 +1 ))
                 wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetMax(int( len(branch[0]) - 1 ))
+                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetValue(int( len(branch[0])-1 ))
             else:
                 wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(False)
                 wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').Enable(False)
@@ -180,6 +182,7 @@ class MsetPanel(_SubPanel):
             self.InitializationCheckList2()
             self.UpdataCheckList2()
             wx.xrc.XRCCTRL(self.panel, 'ButtonDrawAll').Enable(True)
+            # todo reset checkedindex1
         def OnDrawCheckedContribution(event):
             try: self.wavepanel
             except AttributeError: self.wavepanel=parent.GetParent().MakePlotPanel('Momentam Rep. of Wave Function')
@@ -193,8 +196,10 @@ class MsetPanel(_SubPanel):
             index_min = int(wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_min').GetValue())
             index_max = int(wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_max').GetValue())
             print index_min, index_max
-            self.branchsearch.hand_branch_pruning(index_min ,index_max, self.checkedindex2[0])
-            self.msetplot.clear()
+            if index_max > index_min:
+                self.branchsearch.hand_branch_pruning(index_min ,index_max, self.checkedindex2[0])
+            else:
+                self.branchsearch.hand_branch_pruning(index_max, index_min, self.checkedindex2[0])
             self.DrawBranch(isDrawMset=not self.checkedbranchonly, isDrawCutBranch='EACH')
         
         
