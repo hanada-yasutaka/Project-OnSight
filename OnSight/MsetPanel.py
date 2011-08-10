@@ -134,6 +134,13 @@ class MsetPanel(_SubPanel):
             else:
                 self.checkedindex2.remove(index)
             self.checkedindex2.sort()
+            print self.checkedindex2
+            if len(self.checkedindex2) == 1:
+                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(True)
+                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').Enable(True)
+            else:
+                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(False)
+                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').Enable(False)
         def OnDrawAction(event):
             try: self.actionplot
             except AttributeError: self.actionplot = parent.GetParent().MakePlotPanel('Im Action vs Re p_n') 
@@ -178,6 +185,11 @@ class MsetPanel(_SubPanel):
             except AttributeError: self.wavepanel=parent.GetParent().MakePlotPanel('Momentam Rep. of Wave Function')
             self.GetSemiclassicalWaveFunction()
         
+        def OnSliderPruningMax(event):
+            print self.checkedindex2
+            print wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_max').GetValue()
+        def OnSliderPruningMin(event):
+            print wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_min').GetValue()
         
         if wx.Platform != '__WXMAC__':
             self.Bind(wx.EVT_SPINCTRL,OnSpinCtrlIteration, wx.xrc.XRCCTRL(self.panel, 'SpinCtrlIteration'))
@@ -221,6 +233,9 @@ class MsetPanel(_SubPanel):
         self.Bind(wx.EVT_BUTTON, OnDrawCheckedContribution, wx.xrc.XRCCTRL(self.panel,'ButtonDrawCheckedContribution'))
         self.Bind(wx.EVT_BUTTON, OnDrawSemiclassicalWave, wx.xrc.XRCCTRL(self.panel, 'ButtonDrawSemiclassicalWave'))
         
+        #
+        self.Bind(wx.EVT_SLIDER, OnSliderPruningMin, wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_min'))
+        self.Bind(wx.EVT_SLIDER, OnSliderPruningMax, wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_max'))
         self.branch_or_chain = 0
         self.GetMset()
         self.DrawMset()
