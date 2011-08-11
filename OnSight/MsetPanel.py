@@ -163,6 +163,7 @@ class MsetPanel(_SubPanel):
             if self.checkedactiondraw:
                 try: self.actionplot
                 except AttributeError: self.actionplot = parent.GetParent().MakePlotPanel('Im Action vs Re p_n')
+                self.GetLset()
                 self.GetAction() 
                 self.DrawAction(marker=':', isDrawCutBranch=True)
 
@@ -258,9 +259,7 @@ class MsetPanel(_SubPanel):
         q = complex(xy[0] + 1.j*xy[1])
         self.GetBranch(q, isTest=True)
         self.DrawBranch()
-        self.checklistbranch1.Append('Branch%3d' % (len(self.branchsearch.worm_start_point) - 1) )
-        self.checklistlabel1.append('Branch%d' % (len(self.branchsearch.worm_start_point)-1) )
-        self.checklistindex1.append((len(self.branchsearch.worm_start_point)-1))
+
     def SearchBranch(self):
         branch_sampling = float(wx.xrc.XRCCTRL(self.panel, 'TextCtrlBranchSample').GetValue())
         branches = self.branchsearch.branches
@@ -274,11 +273,17 @@ class MsetPanel(_SubPanel):
         self.branchsearch.get_realbranch(branch_sampling)            
         self.branchsearch.worm_start_point = []
         self.DrawBranch(True)
-        self.DrawLset(False)
-        self.DrawAction()
     def GetBranch(self, q, wr=0.001, a=0, isTest=False):
         if isTest:
-            self.branchsearch.search_neary_branch(q,wr=wr, isTest=True)
+            print wr
+            err = self.branchsearch.search_neary_branch(q,wr=wr, isTest=True)
+            if err:
+                self.branchsearch.branches.pop()
+                self.branchsearch.worm_start_point.pop()
+            else:
+                self.checklistbranch1.Append('Branch%3d' % (len(self.branchsearch.worm_start_point) - 1) )
+                self.checklistlabel1.append('Branch%d' % (len(self.branchsearch.worm_start_point)-1) )
+                self.checklistindex1.append((len(self.branchsearch.worm_start_point)-1))
         else:
             r = wr*a
             if r <1e-8: r = 1-e7
@@ -424,6 +429,9 @@ class MsetPanel(_SubPanel):
     def DeleteCheckedBranches(self):
         count = 0
         self.checkedindex1.sort()
+        self.GetLset()
+        self.GetAction()
+        print len(self.branchsearch.worm_start_point), len(self.branchsearch.lset), len(self.branchsearch.action)
         for i in self.checkedindex1:
             self.branchsearch.worm_start_point.pop(i-count)
             self.branchsearch.lset.pop(i-count)
