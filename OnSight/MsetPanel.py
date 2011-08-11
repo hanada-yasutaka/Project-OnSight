@@ -134,19 +134,19 @@ class MsetPanel(_SubPanel):
             else:
                 self.checkedindex2.remove(index)
             self.checkedindex2.sort()
-            if len(self.checkedindex2) == 1:
-                branch = self.branchsearch.branch_data[self.checkedindex2[0]]
-                cut_index = self.branchsearch.cut_index[self.checkedindex2[0]]
-                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').Enable(True)
-                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(True)
-                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').SetMax(int( len(branch[0]) -1 ))
+#           if len(self.checkedindex2) == 1:
+#                branch = self.branchsearch.branch_data[self.checkedindex2[0]]
+#                cut_index = self.branchsearch.cut_index[self.checkedindex2[0]]
+#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').Enable(True)
+#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(True)
+#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').SetMax(int( len(branch[0]) -1 ))
                 #wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetMin(int( len(branch[0])/2 +1 ))
-                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetMax(int( len(branch[0]) - 1 ))
-                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').SetValue(cut_index.min())
-                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetValue(cut_index.max())
-            else:
-                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(False)
-                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').Enable(False)
+#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetMax(int( len(branch[0]) - 1 ))
+#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').SetValue(cut_index.min())
+#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetValue(cut_index.max())
+#            else:
+#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(False)
+#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').Enable(False)
         def OnDrawAction(event):
             try: self.actionplot
             except AttributeError: self.actionplot = parent.GetParent().MakePlotPanel('Im Action vs Re p_n') 
@@ -197,11 +197,21 @@ class MsetPanel(_SubPanel):
             index_min = int(wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_min').GetValue())
             index_max = int(wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_max').GetValue())
             if index_max > index_min:
-                self.branchsearch.hand_branch_pruning(index_min ,index_max, self.checkedindex2[0])
+                print self.slider_pruning_index
+                self.branchsearch.hand_branch_pruning(index_min ,index_max, self.slider_pruning_index)
             else:
-                self.branchsearch.hand_branch_pruning(index_max, index_min, self.checkedindex2[0])
+                #self.branchsearch.hand_branch_pruning(index_max, index_min, self.checkedindex2[0])
+                self.branchsearch.hand_branch_pruning(index_max, index_min, self.slider_pruning_index)
             self.DrawBranch(isDrawMset=not self.checkedbranchonly, isDrawCutBranch='EACH')
-        
+        def OnBranchChoice(event):
+            self.slider_pruning_index = self.checklistlabel2.index(str(event.GetString()))
+            branch = self.branchsearch.branch_data[self.slider_pruning_index]
+            cut_index = self.branchsearch.cut_index[self.slider_pruning_index]
+            wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').SetMax(int( len(branch[0]) -1 ))
+            wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetMax(int( len(branch[0]) - 1 ))
+            wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').SetValue(cut_index.min())
+            wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetValue(cut_index.max())
+ 
         
         if wx.Platform != '__WXMAC__':
             self.Bind(wx.EVT_SPINCTRL,OnSpinCtrlIteration, wx.xrc.XRCCTRL(self.panel, 'SpinCtrlIteration'))
@@ -246,6 +256,7 @@ class MsetPanel(_SubPanel):
         self.Bind(wx.EVT_BUTTON, OnDrawSemiclassicalWave, wx.xrc.XRCCTRL(self.panel, 'ButtonDrawSemiclassicalWave'))
         
         #
+        self.Bind(wx.EVT_CHOICE, OnBranchChoice, wx.xrc.XRCCTRL(self.panel, 'ChoiceBranch'))
         self.Bind(wx.EVT_SLIDER, OnSliderPruning, wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_min'))
         self.Bind(wx.EVT_SLIDER, OnSliderPruning, wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_max'))
         self.branch_or_chain = 0
@@ -272,10 +283,10 @@ class MsetPanel(_SubPanel):
             i+=1
         self.branchsearch.get_realbranch(branch_sampling)            
         self.branchsearch.worm_start_point = []
-        self.DrawBranch(True)
+        # todo after branch searching 
+  #      self.DrawBranch(True)
     def GetBranch(self, q, wr=0.001, a=0, isTest=False):
         if isTest:
-            print wr
             err = self.branchsearch.search_neary_branch(q,wr=wr, isTest=True)
             if err:
                 self.branchsearch.branches.pop()
@@ -307,7 +318,7 @@ class MsetPanel(_SubPanel):
         self.checklistindex1.append(0)
     def DrawBranch(self, isDrawMset=True,marker='.',isDrawCutBranch=False):
         if isDrawCutBranch=='ALL': br_list = range(len(self.checklistindex1))
-        elif isDrawCutBranch=='EACH': br_list = self.checkedindex2
+        elif isDrawCutBranch=='EACH': br_list = [self.slider_pruning_index]
         elif len(self.checkedindex1) == 0: br_list = range(len(self.branchsearch.branches))
         else: br_list = self.checkedindex1
         self.msetplot.plot()
@@ -450,6 +461,7 @@ class MsetPanel(_SubPanel):
     def InitializationCheckList2(self):
         for i in range(len(self.checklistindex2)):
             self.checklistbranch2.Delete(0)
+            wx.xrc.XRCCTRL(self.panel, 'ChoiceBranch').Delete(0)
         self.checklistindex2 = []
         self.checklistlabel2 = []
         self.checkedindex2   = []
@@ -465,6 +477,7 @@ class MsetPanel(_SubPanel):
             self.checklistindex2.append(i)
             self.checklistlabel2.append('Branch%d' % i)
             self.checklistbranch2.Append('Branch%3d' % i)
+            wx.xrc.XRCCTRL(self.panel, 'ChoiceBranch').Append('Branch%d' % i)
 
     def SaveBranch(self):
         import os
@@ -515,14 +528,15 @@ class MsetPanel(_SubPanel):
             semiwave = self.branchsearch.get_semiwave(branch_data, range[0],range[1], range[2],range[3], range[4])
             abs_swave = numpy.abs(semiwave)**2/numpy.sum(numpy.abs(semiwave)**2)
             self.wavepanel.replot(p, abs_swave)
-            ann_index1 = set(numpy.where(abs_swave < 1e-8)[0])
-            ann_index2 = set(numpy.where(abs_swave > 1e-16)[0])
-            ann_index3 = list(ann_index1.intersection(ann_index2))
-            ann_index3.sort()
-            if len(ann_index3) == 0 : ann_index = int(range[4]/2)
-            else: ann_index = int((ann_index3[len(ann_index3)-1] - ann_index3[0])/2)
-            self.wavepanel.axes.annotate('%d' % (index) , xy=(branch_data[1][1][range[4]/2].real, abs_swave[range[4]/2]),  xycoords='data',
-                                                          xytext=(-20, 20), textcoords='offset points', arrowprops=dict(arrowstyle="->"))
+            # to do indexing of each wave fuctioin
+#            ann_index1 = set(numpy.where(abs_swave < 1e-8)[0])
+#            ann_index2 = set(numpy.where(abs_swave > 1e-16)[0])
+#            ann_index3 = list(ann_index1.intersection(ann_index2))
+#            ann_index3.sort()
+#            if len(ann_index3) == 0 : ann_index = int(range[4]/2)
+#            else: ann_index = int((ann_index3[len(ann_index3)-1] - ann_index3[0])/2)
+#            self.wavepanel.axes.annotate('%d' % (index) , xy=(branch_data[1][1][range[4]/2].real, abs_swave[range[4]/2]),  xycoords='data',
+#                                                          xytext=(-20, 20), textcoords='offset points', arrowprops=dict(arrowstyle="->"))
         self.set_semiwave_range()
         self.wavepanel.draw()
     def GetSemiclassicalWaveFunction(self):
