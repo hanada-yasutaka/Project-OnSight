@@ -76,6 +76,8 @@ class BranchSearch(object):
         
         self.branch_data = []
         self.cut_branches_data = []
+        
+        self.cut_index = []
     def get_realbranch(self, sample=500):
         x = numpy.arange(0.0, 1.0, 1.0/sample) + 0.0j
         self.branches.insert(0,x)
@@ -126,18 +128,23 @@ class BranchSearch(object):
             index = self.where_sign_inversion(circle, self.p, self.iter)
             if len(index) == 0: r = 3.0*r
             elif len(index) > 2: r = 0.5*r
-            else: break
+            else:
+                err = None 
+                break
         section = self.bisection(circle[index[0]-1], circle[index[0]], self.p, self.iter)
         self.worm_start_point.append(section)
         self.get_branch(section, wsample, wr, wsamplemax, isTest=isTest)
         n=1.0
         while len(self.branches[len(self.branches)-1]) < 10:
+            print wr*n  
             if n < 1e-5:
-                raise ValueError
-            n = n*0.1
+                print 'Branch Serach Error'
+                err = True
+                break
+            n = n*0.5
             self.branches.pop()
             self.get_branch(section, wsample, wr*n, 1e5, isTest=isTest)
-        
+        return err
     def get_branch(self, start_point, sample=100, r = 0.0001, sample_max=1e5, isTest=False):
         self.isTest=isTest
         branch = numpy.array([])        
@@ -177,9 +184,10 @@ class BranchSearch(object):
                 p2,r2 = point, r2
                 worming_number +=1
                 if worming_number % 100 == 0 or ch_sam !=0:
-                    print '%dth worm:(r,sample)=(%f,%d)' % (worming_number, r2, sample),\
+                    print '%dth worm:(r,sample)=(%.0e,%d)' % (worming_number, r2, sample),\
                     '|[Im(P_n)]|~%.0e' % numpy.abs(data[1][index-1].imag - data[1][index].imag)
-                if self.isTest and worming_number > 5000: break 
+                #if self.isTest and worming_number > 5000: break 
+                if self.isTest and ( sample > 10000 or worming_number > 5000) : break 
             ch_sam = 0
 
         return branch 
@@ -259,10 +267,6 @@ class BranchSearch(object):
         import pylab
         if numpy.sum(numpy.abs(branch_data[2].imag) < 1e-16) == len(branch_data[2].imag):
             index = numpy.arange(len(branch_data[2].imag))
-            #import pylab
-            #pylab.plot(branch_data[0].real, branch_data[0].imag, '--')
-            #pylab.plot(branch_data[0][index].real, branch_data[0][index].imag, 'o')
-            #pylab.show()
         elif isChain :
             index = self.adhoc_branch_pruning(branch_data)
         else:
@@ -273,6 +277,8 @@ class BranchSearch(object):
                 if branch_data[2][count].imag >= 0.0:
                     index.append(count)
                 count += 1
+            index = numpy.array(index)
+        self.cut_index.append(index)
         self.cut_branches_data.append([branch_data[0][index], [branch_data[1][0][index], branch_data[1][1][index]], branch_data[2][index]])
         #return branch_data[0][index], [branch_data[1][0][index], branch_data[1][1][index]], branch_data[2][index]
     def difference(self, x):
