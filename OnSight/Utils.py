@@ -143,7 +143,7 @@ classification={
 		'SymplecticMap':{
 			'':['HarperMap','PiecewiseLinearHarper','SharpenHarper'],
 			'Standard Map':{
-				'':['StandardMap','PiecewiseLinearStandard','SharpenStandard','TruncatedStandard','QuadraticStandard','NQuadraticStandard','ShudoStandard']
+				'':['StandardMap','PiecewiseLinearStandard','SharpenStandard','TruncatedStandard','QuadraticStandard','NQuadraticStandard','ShudoStandard','HypTanStandard']
 			},
 			'Kepler Map':{
 				'':['KeplerMap','KeplerGeneral']
@@ -285,6 +285,7 @@ labels={
 	'QuadraticStandard':{'Axis':[r'q',r'p'],'Parameter':[r'k']},
 	'NQuadraticStandard':{'Axis':[r'q',r'p'],'Parameter':[r'k',r'n']},
 	'ShudoStandard':{'Axis':[r'q',r'p'],'Parameter':[r'k',r'p_d',r'\omega',r'\nu']},
+	'HypTanStandard':{'Axis':[r'q',r'p'],'Parameter':[r'k',r's',r'$\beta$',r'd',r'$\omega$']},
 	'KeplerMap':{'Axis':[r'\phai',r'E'],'Parameter':[r'k',r'a']},
 	'KeplerGeneral':{'Axis':[r'\phai',r'E'],'Parameter':[r'k',r'a',r'p']},
 	'HarperMap':{'Axis':[r'q',r'p'],'Parameter':[r'k']},
