@@ -7,8 +7,6 @@ import numpy
 
 twopi=2*numpy.pi
 
-
-
 class Mset(Space):
     def __init__(self, map):
         map.isComplex = True  
@@ -246,12 +244,12 @@ class BranchSearch(object):
         mset = Mset(self.map)
         mset.mset(self.p, self.iter, grid, xi_min, xi_max, eta_min, eta_max)
         return mset.get_mset()
-    def get_map(self, xmin, xmax, ymax, ymin, sample, iter):
-        map = self.map
-        map.isComplex = False
+    def get_map(self, map, xmin, xmax, ymin, ymax, sample, iter):
+
         map.Psetting = self.Psetting
         ms = MapSystem(map, True)
-        ms.setPeriodic(self.Psetting)
+        #ms.setPeriodic(self.Psetting)
+        ms.setPeriodic(map.Psetting)
         x = numpy.random.random(sample)
         y = numpy.arange(ymin, ymax, (ymax - ymin)/sample)
         point = Point(map.dim, map.isComplex, [x,y])
@@ -262,6 +260,7 @@ class BranchSearch(object):
             data[0].append(numpy.array(ms.Trajectory[i]).transpose()[0])
             data[1].append(numpy.array(ms.Trajectory[i]).transpose()[1])
         return data
+
 
     def get_pruning_branch(self, branch_data, cut_pmin=-10.0, cut_pmax=10.0, isChain=False):
         import pylab
@@ -323,26 +322,7 @@ class BranchSearch(object):
                     weight += numpy.exp(twopi*1.j*(branch_data[2][j])/h)
             semi_wave[i] = weight
         return semi_wave
-        
 
-class CompPathIntegration(object):
-    def __init__(self, map, p, iter):
-        map.isComplex = True
-        self.map = map
-        self.p = p
-        self.iter = iter
-    def branch_pruing(self):
-        pass
-    def get_pruning_lset(self):
-        pass
-    def get_pruning_action(self):
-        pass
-    def get_pruning_branch(self):
-        pass
-    def path_integration(self):
-        pass
-    def diffirence(self):
-        pass
 
 
     

@@ -264,9 +264,11 @@ class MsetPanel(_SubPanel):
         self.DrawMset()
 
     def OnPress(self,xy):
+        print 'Start Branch Search'
         if 'Branch0' not in self.checklistlabel1:
              self.GetRealBranch()
              self.branchsearch.worm_start_point.insert(0,None)
+        print 'End Branch Search'             
         q = complex(xy[0] + 1.j*xy[1])
         self.GetBranch(q, isTest=True)
         self.DrawBranch()
@@ -303,11 +305,11 @@ class MsetPanel(_SubPanel):
         range = self.get_mset_range()
         self.mset_data = self.branchsearch.get_mset(range[0],range[1],range[2],range[3],range[4])
     def GetLset(self, isPeriodic=True):
-        range = self.get_lset_range()
         self.branchsearch.get_lset(isPeriodic)
     def GetClMap(self):
         range = self.get_lset_range()
-        self.mapdata = self.branchsearch.get_map(range[0],range[1],range[2],range[3],sample=50, iter=100)
+
+        self.mapdata = self.branchsearch.get_map(self.map,range[0],range[1],range[2],range[3],sample=50, iter=100)
     def GetAction(self):
         self.branchsearch.get_action()
     def GetRealBranch(self):
