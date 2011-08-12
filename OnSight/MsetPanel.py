@@ -197,12 +197,10 @@ class MsetPanel(_SubPanel):
             index_min = int(wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_min').GetValue())
             index_max = int(wx.xrc.XRCCTRL(self.panel, 'SliderBranchPruning_max').GetValue())
             if index_max > index_min:
-                print self.slider_pruning_index
                 self.branchsearch.hand_branch_pruning(index_min ,index_max, self.slider_pruning_index)
             else:
-                #self.branchsearch.hand_branch_pruning(index_max, index_min, self.checkedindex2[0])
                 self.branchsearch.hand_branch_pruning(index_max, index_min, self.slider_pruning_index)
-            self.DrawBranch(isDrawMset=not self.checkedbranchonly, isDrawCutBranch='EACH')
+            self.DrawBranch(isDrawMset=not self.checkedbranchonly, isDrawCutBranch='ALL')
         def OnBranchChoice(event):
             self.slider_pruning_index = self.checklistlabel2.index(str(event.GetString()))
             branch = self.branchsearch.branch_data[self.slider_pruning_index]
@@ -211,6 +209,8 @@ class MsetPanel(_SubPanel):
             wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetMax(int( len(branch[0]) - 1 ))
             wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').SetValue(cut_index.min())
             wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetValue(cut_index.max())
+            self.DrawBranch(isDrawMset=not self.checkedbranchonly, isDrawCutBranch='ALL')
+
  
         
         if wx.Platform != '__WXMAC__':
