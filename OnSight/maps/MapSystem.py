@@ -356,7 +356,7 @@ class NQuadraticStandard(Symplectic2d):
 		return self.Para.para[0]*(b*(-2.0**(4.0*n-3.0)/n *(2*n) *(x-0.25)**(2*n-1)) + (~b)*(2.0**(4.0*n-3.0)/n *(2*n) *(x-0.75)**(2*n-1)) )
 
 class ShudoStandard(StandardMap):
-	def __init__(self,k=1.0,pd=5.0,omega=1.0,nu=3.0,isComplex=False):
+	def __init__(self,k=1.2,pd=5.0,omega=1.0,nu=3.0,isComplex=False):
 		StandardMap.__init__(self,isComplex=isComplex)
 		self.Para=Parameter(4)
 		self.Para.para[0]=k
@@ -388,8 +388,49 @@ class ShudoStandard(StandardMap):
 	def ifunc1(self,x):
 		g=numpy.power(x/self.Para.para[1],2*self.Para.para[3])
 		return ( x*x*0.5*g/(1+g) + self.Para.para[2]*x )/twopi
-		
 
+class HypTanStandard(StandardMap):
+	def __init__(self,k=2.0, s=4.173, beta=100.0, d=0.4, omega=0.6418,isComplex=False):
+		StandardMap.__init__(self,isComplex=isComplex)
+		self.Para=Parameter(5)
+		self.Para.para[0] = k
+		self.Para.range[0] = (0.0, None)
+		self.Para.para[1] = s
+		self.Para.range[1] = (0.0, None)
+		self.Para.para[2] = beta
+		self.Para.range[2] = (0.0, None)
+		self.Para.para[3] = d
+		self.Para.range[3] = (0.0, None)
+		self.Para.para[4] = omega
+		self.Para.range[4] = (0.0, None)
+		
+	def func0(self, x):
+		return -self.Para.para[0]*numpy.sin(x*twopi)/twopi
+	
+	def dfunc0(self, x):	
+		return -self.Para.para[0]*numpy.cos(x*twopi)
+	
+	def ifunc0(self, x):
+		return self.Para.para[0]*numpy.cos(x*twopi)/twopi/twopi
+
+	def func1(self, x):
+		g = x - self.Para.para[3]
+		s = self.Para.para[1]
+		beta = self.Para.para[2]
+		return s/2*g*(1+numpy.tanh(beta*g)) + s*g*g*beta/4.0/(numpy.cosh(beta*g)**2) + self.Para.para[4]
+
+	def ifunc1(self, x):
+		g = x - self.Para.para[3]
+		s = self.Para.para[1]
+		beta = self.Para.para[2]
+		return s/2*g*(1+numpy.tanh(beta*g)) + self.Para.para[4]*g
+
+	def dfunc1(self, x):
+		g = x - self.Para.para[3]
+		s = self.Para.para[1]
+		beta = self.Para.para[2]
+		return s/2*(1+numpy.tanh(beta*g)) + s*x*beta/(numpy.cosh(beta*g)**2) - s/2*x*x*beta*numpy.sinh(beta*g)/(numpy.cosh(beta*g)**3) 
+	
 class KeplerMap(StandardMap):
 	def __init__(self,k=1.0,a=1.0,isComplex=False):
 		StandardMap.__init__(self,isComplex=isComplex)
