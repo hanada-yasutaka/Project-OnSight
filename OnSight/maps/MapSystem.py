@@ -391,6 +391,9 @@ class ShudoStandard(StandardMap):
 
 class HypTanStandard(StandardMap):
 	def __init__(self,k=2.0, s=4.173, beta=100.0, d=0.4, omega=0.6418,isComplex=False):
+		# to do
+		# When this map are called in onsight, raise Warning: overflow
+		# But func0 and func1 is not overflow...
 		StandardMap.__init__(self,isComplex=isComplex)
 		self.Para=Parameter(5)
 		self.Para.para[0] = k
@@ -418,7 +421,6 @@ class HypTanStandard(StandardMap):
 		s = self.Para.para[1]
 		beta = self.Para.para[2]
 		return s/2*g*(1+numpy.tanh(beta*g)) + s*g*g*beta/4.0/(numpy.cosh(beta*g)**2) + self.Para.para[4]
-
 	def ifunc1(self, x):
 		g = x - self.Para.para[3]
 		s = self.Para.para[1]
