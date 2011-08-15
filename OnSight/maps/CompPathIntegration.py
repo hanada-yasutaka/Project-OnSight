@@ -66,6 +66,8 @@ class BranchSearch(object):
         self.iter = iter
         self.p = p + 0.0j
         self.Psetting=self.map.Psetting
+        #todo fixed: it didn't work as I had expected, after change psetting on OnSight.
+        #i.e., Harper map  
         self.mset = Mset(self.map)
         self.worm_start_point = []
         self.branches = [] 
@@ -103,7 +105,6 @@ class BranchSearch(object):
         self.get_action()
         for i in range(len(self.branches)):
             filename = '%s/Branch%s.dat' % (path, i+th)
-        #    if os.path.isfile(path) != True: raise TypeError
             index = range(len(self.branches[i]))
             data = numpy.array([index,
                          self.branches[i].real, self.branches[i].imag,
@@ -120,7 +121,6 @@ class BranchSearch(object):
 
     def search_neary_branch(self, x, r=1e-3, wsample=100, wr=1e-4, wsamplemax =1e4, isTest=False):
         self.isTest=isTest
-        #if isTest: wr ,wsample, wsamplemax = 0.001, 100, 1e4
         while True:
             circle = self.make_circle(x,r)
             index = self.where_sign_inversion(circle, self.p, self.iter)
@@ -248,7 +248,6 @@ class BranchSearch(object):
 
         map.Psetting = self.Psetting
         ms = MapSystem(map, True)
-        #ms.setPeriodic(self.Psetting)
         ms.setPeriodic(map.Psetting)
         x = numpy.random.random(sample)
         y = numpy.arange(ymin, ymax, (ymax - ymin)/sample)
@@ -279,7 +278,6 @@ class BranchSearch(object):
             index = numpy.array(index)
         self.cut_index.append(index)
         self.cut_branches_data.append([branch_data[0][index], [branch_data[1][0][index], branch_data[1][1][index]], branch_data[2][index]])
-        #return branch_data[0][index], [branch_data[1][0][index], branch_data[1][1][index]], branch_data[2][index]
     def difference(self, x):
         inf = numpy.float('inf')
         x1 = numpy.insert(x, 0, 0.0)
@@ -322,7 +320,5 @@ class BranchSearch(object):
                     weight += numpy.exp(twopi*1.j*(branch_data[2][j])/h)
             semi_wave[i] = weight
         return semi_wave
-
-
 
     
