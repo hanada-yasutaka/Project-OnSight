@@ -47,9 +47,8 @@ class MsetPanel(_SubPanel):
         self.msetplot.OnPress=self.OnPress         
 
         ### Event methods
-# general notebook
+
         def OnApply(event):
-            # to do dialogue
             self.Initialization()
             self.GetMset()
             self.DrawMset()      
@@ -76,6 +75,7 @@ class MsetPanel(_SubPanel):
             self.lsetplot.clear()
             self.DrawLset(isDrawMap=not event.IsChecked())
         def OnCheckBoxQmapDraw(event):
+            # todo draw wave function
             pass
         def OnQmapSet(event):
             self.get_qmap_range()
@@ -134,19 +134,7 @@ class MsetPanel(_SubPanel):
             else:
                 self.checkedindex2.remove(index)
             self.checkedindex2.sort()
-#           if len(self.checkedindex2) == 1:
-#                branch = self.branchsearch.branch_data[self.checkedindex2[0]]
-#                cut_index = self.branchsearch.cut_index[self.checkedindex2[0]]
-#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').Enable(True)
-#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(True)
-#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').SetMax(int( len(branch[0]) -1 ))
-                #wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetMin(int( len(branch[0])/2 +1 ))
-#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetMax(int( len(branch[0]) - 1 ))
-#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').SetValue(cut_index.min())
-#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').SetValue(cut_index.max())
-#            else:
-#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_max').Enable(False)
-#                wx.xrc.XRCCTRL(self.panel,'SliderBranchPruning_min').Enable(False)
+
         def OnDrawAction(event):
             try: self.actionplot
             except AttributeError: self.actionplot = parent.GetParent().MakePlotPanel('Im Action vs Re p_n') 
@@ -264,15 +252,15 @@ class MsetPanel(_SubPanel):
         self.DrawMset()
 
     def OnPress(self,xy):
-        print 'Start Branch Search'
         if 'Branch0' not in self.checklistlabel1:
              self.GetRealBranch()
              self.branchsearch.worm_start_point.insert(0,None)
-        print 'End Branch Search'             
         q = complex(xy[0] + 1.j*xy[1])
+        print 'Start Branch Search'
         self.GetBranch(q, isTest=True)
+        print 'End Branch Search'             
         self.DrawBranch()
-
+        
     def SearchBranch(self):
         branch_sampling = float(wx.xrc.XRCCTRL(self.panel, 'TextCtrlBranchSample').GetValue())
         branches = self.branchsearch.branches
@@ -286,7 +274,7 @@ class MsetPanel(_SubPanel):
         self.branchsearch.get_realbranch(branch_sampling)            
         self.branchsearch.worm_start_point = []
         # todo after branch searching 
-  #      self.DrawBranch(True)
+        
     def GetBranch(self, q, wr=0.001, a=0, isTest=False):
         if isTest:
             err = self.branchsearch.search_neary_branch(q,wr=wr, isTest=True)
@@ -315,7 +303,6 @@ class MsetPanel(_SubPanel):
     def GetRealBranch(self):
         self.branchsearch.get_realbranch()
         self.checklistbranch1.Append('Branch  0')
-       # self.checklistbranch2.Append('Branch0')
         self.checklistlabel1.append('Branch0')
         self.checklistindex1.append(0)
     def DrawBranch(self, isDrawMset=True,marker='.',isDrawCutBranch=False):
@@ -346,7 +333,6 @@ class MsetPanel(_SubPanel):
     def DrawLset(self, isDrawMap=False,marker='.',isDrawCutBranch=False):
         self.lsetplot.plot()
         if len(self.checkedindex1) == 0: index = range(len(self.branchsearch.lset))
-   #     elif isDrawCutBranch : index = range(len(self.checklistindex1))
         else: index = self.checkedindex1
         for i in index:
             data = self.branchsearch.lset[i]
@@ -368,7 +354,6 @@ class MsetPanel(_SubPanel):
     def DrawAction(self, marker='.',isDrawCutBranch=False):
         self.actionplot.plot()
         if len(self.checkedindex1) == 0: index = range(len(self.branchsearch.action))
-    #    elif isDrawCutBranch: index = range(len(self.checklistindex1))
         else: index = self.checkedindex1
         for i in index:
             action = self.branchsearch.action[i]
