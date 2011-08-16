@@ -69,8 +69,11 @@ class WaveFunction(PhaseSpace2d):
             + 1.j *( - zz.imag/2.0 + numpy.sqrt(2.0)*q*z.imag)         
         res = numpy.exp(tmp)*numpy.sqrt(2.0 / self.h)
         return res
-    def quantized_linear_tori(self, p_c):
-        # see peper written by ishikawa ( Recovery of chaotic tunneling due to destruction of dynamical localization by external noise)
+    def quantized_linear_tori(self, p_c, k, omega):
+        x = (twopi/self.h)*(-k/(4.0*twopi*twopi*sin(numpy.pi*omega))*sin(twopi*(x-omega/2.0))+p_c*x)
+        pass
+class Operator(PhaseSpace2d):
+    def __init__(self, range, hdim):
         pass
 
 class Representation(PhaseSpace2d):
@@ -201,7 +204,6 @@ class Qmap(PhaseSpace2d):
         ax = Axes3D(fig)        
         ax.plot_wireframe(X, Y, hsm_data)
         pylab.show()
-
 
         
 if __name__ == '__main__':
