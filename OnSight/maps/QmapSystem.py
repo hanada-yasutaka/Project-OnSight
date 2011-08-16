@@ -51,7 +51,8 @@ class WaveFunction(PhaseSpace2d):
         coh_state2 = coh_state.reshape(m,len(q))
         for i in range(m):
             vec += coh_state2[i][::1]
-        self.vec = vec / numpy.sum(numpy.abs(vec))
+        norm = numpy.sum(numpy.abs(vec)**2)
+        self.vec = vec.real /numpy.sqrt(norm) + 1.j*vec.imag/numpy.sqrt(norm) 
         return self.vec
     def coherent_state_q(self, q_in, q_c, p_c):
         q = q_in/numpy.sqrt(self.h/towpi)
@@ -91,6 +92,7 @@ class Operator(PhaseSpace2d):
         out_vec = numpy.fft.fft(vec1)
         vec1 = freeop * out_vec
         self.fvec = numpy.fft.ifft(vec1)
+        print numpy.sum(numpy.abs(self.fvec)**2)
         return self.fvec
     def evolve_open(self, in_vec):
         if self.absetting == None: raise TypeError
@@ -103,6 +105,7 @@ class Operator(PhaseSpace2d):
         vec1 = freeop * out_vec
         out_vec = numpy.fft.ifft(vec1)
         self.fvec = self.absorb(self.q, self.absetting[0],out_vec)
+        print numpy.sum(numpy.abs(self.fvec)**2)
         return self.fvec
     def absorb(self, x, absetting, vec):
         i = 0
