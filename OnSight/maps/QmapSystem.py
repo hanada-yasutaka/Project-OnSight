@@ -21,17 +21,10 @@ class PhaseSpace2d(object):
                 'h': self.h, 'hdim' : self.hdim }
         return info
 class Hole(PhaseSpace2d):
-    def __init__(self, bsetting):
-        self.bsetting = bsetting
+    def __init__(self, asetting):
+        self.asetting = absetting
         # example
         bsetting = [ (True, [0.0,0.1], [0.2,0.3]), (False, []) ]
-
-class Perturbation(PhaseSpace2d):
-    def __init__(self, persetting):
-        self.persetting = persetting
-        # example
-        persetting = [ 'noise', (False, []), (True, [-0.5, 0.5]) ]
-
 
 class WaveFunction(PhaseSpace2d):
     def __init__(self, range, hdim):
@@ -73,9 +66,34 @@ class WaveFunction(PhaseSpace2d):
         x = (twopi/self.h)*(-k/(4.0*twopi*twopi*sin(numpy.pi*omega))*sin(twopi*(x-omega/2.0))+p_c*x)
         pass
 class Operator(PhaseSpace2d):
-    def __init__(self, range, hdim):
+    def __init__(self, map, range, hdim):
+        PhaseSpace2d.__init__(self, range, hdim)
+        self.map = map
+    def free_operator(self, isShift=True):
+        if isShift:
+            sp = numpy.fft.fftshift(self.p)
+            tfunc = self.map.ifunc1(sp)
+        else:
+            tfunc = self.map.ifunc1(self.p)
+        return numpy.exp(-towpi*1.j* tfunc/self.h)
+    def kick_operator(self, isShift=False):
+        if isShift:
+            sq = numpy.fft.fftshift(self.q)
+            vfunc = self.map.ifunc0(sq)
+        else:
+            vfunc = self.map.ifunc0(self.q)
+        return numpy.exp(-towpi*1.j*vfunc /self.h)
+    def evolve(self, in_vec):
+        freeop = self.free_operator(isShift=True)
+        kickop = self.kick_operator(isShift=False)
+        vec1 = kickop * in_vec
+        out_vec = numpy.fft.fft(vec1)
+        vec1 = freeop * out_vec
+        self.fvec = numpy.fft.ifft(vec1)
+        return self.fvec
+    def eigen_val(self):
         pass
-
+        print self.range
 class Representation(PhaseSpace2d):
     def __init__(self, range, hdim):
         PhaseSpace2d.__init__(self, range, hdim)
@@ -84,6 +102,63 @@ class Representation(PhaseSpace2d):
         return self.q, vec
     def q_rep(self):
         pass
+class Perturbation(Operator):
+    def __init__(self, map, range, hdim):
+        Operator.__init__(self, map, range, hdim)
+    def set_perturbation(self, setting):
+        list=['noise']
+        if setting[0][0] not in list: raise TypeError
+        if setting[0][0] == 'noise': self.perturbation = self.noise
+        print self.perturbation
+        self.setting = setting
+    def free_operator(self, isShift=True):
+        if isShift:
+            sp = numpy.fft.fftshift(self.p)
+            tfunc = self.map.ifunc1(sp)
+            i=0
+            for setting in self.setting[2]: 
+                if not setting:
+                    break
+                elif i != 0:
+                    tfunc = self.perturbation(sp, self.setting[0][1],setting[0], setting[1], tfunc)
+                i += 1
+        else:
+            trunc = self.map.ifunc1(self.p)
+            i=0
+            for setting in self.setting[2]:
+                if not setting:
+                    break
+                elif i != 0:
+                    tfunc = self.perturbation(self.p, self.setting[0][1],setting[0], setting[1], tfunc)
+                i += 1
+        return numpy.exp(-twopi*1.j*tfunc/self.h)
+    def kick_operator(self, isShift=False):
+        if isShift:
+            sq = numpy.fft.fftshift(self.q)
+            vfunc = self.map.ifunc0(sq)
+            i = 0
+            for setting in self.setting[1]:
+                if not setting:
+                    break
+                elif i != 0:
+                    vfunc = self.perturbation(sp, self.setting[0][1], setting[0], setting[1], vfunc)
+                i += 1
+        else:
+            vfunc = self.map.ifunc0(self.q)
+            i=0
+            for setting in self.setting[2]:
+                if not setting:
+                    break
+                elif i != 0:
+                    vfunc = self.perturbation(self.q, self.setting[0][1], setting[0], setting[1], vfunc)
+        return numpy.exp(-towpi*1.j*vfunc /self.h)
+    def noise(self, x, eps, pcut_min, pcut_max, func):
+        index1 = set(numpy.where(x > pcut_min)[0])
+        index2 = set(numpy.where(x < pcut_max)[0])
+        index = list(index1.intersection(index2))
+        for i in index:
+            func[i] = func[i] + eps*numpy.random.random()
+        return func    
 
 class PhaseSpaceRep(Representation):
     def __init__(self, range, hdim):
@@ -133,54 +208,33 @@ class Qmap(PhaseSpace2d):
         self.grid = (50, 50)
         self.rep = PhaseSpaceRep(self.range, self.hdim)
         self.rep.set_vrange(self.range, (50,50))
-    def set_state(self, state, *args):
+    def setState(self, state, *args):
         self.wave = WaveFunction(self.range, self.hdim)
         if state in ('q'): self.ivec = self.wave.del_q(args[0])
         elif state in ('p'): pass #self.wave.del_p(p_c)
         elif state in ('cs'): self.ivec = self.wave.cs_qvec(args[0], args[1])
         elif state in ('qlt'): pass
         else: raise TypeError
-    def free_operator(self, isShift=True):
-        if isShift:
-            sp = numpy.fft.fftshift(self.p)
-            tfunc = self.map.ifunc1(sp)
-        else:
-            tfunc = self.map.ifunc1(self.p)
-        return numpy.exp(-towpi*1.j* tfunc/self.h)
-    def kick_operator(self, isShift=False):
-        if isShift:
-            sq = numpy.fft.fftshift(self.q)
-            vfunc = self.map.ifunc0(sq)
-        else:
-            vfunc = self.map.ifunc0(self.q)
-        return numpy.exp(-towpi*1.j*vfunc /self.h)
+        self.op = Operator(self.map, self.range, self.hdim)
+        self.evolv = self.op.evolve   
     def evolve(self, iter, dt=1, TimeLine=True):
-        #if self.Bsetting
-        evol = self._evolve
+        if self.ivec == None: raise ValueError
         invec = self.ivec
-        print TimeLine, dt
         for i in range(iter):
             if TimeLine and i%dt == 0:
                 self.vecs.append(invec)
-            outvec = evol(invec)
+            outvec = self.evolv(invec)
             invec = outvec
         self.fvec = outvec
-    def _evolve(self, in_vec):
-        freeop = self.free_operator(isShift=True)
-        kickop = self.kick_operator(isShift=False)
-        vec1 = kickop * in_vec
-        out_vec = numpy.fft.fft(vec1)
-        vec1 = freeop * out_vec
-        self.fvec = numpy.fft.ifft(vec1)
-        return self.fvec
-    def _evolve_opne(self):
+    def setPerturb(self):#, pesetting):
+        pesetting = [ ('noise', 1.0), (True, [0.2,0.3]), (True, [0.3, 0.5]) ]        
+        self.op =  Perturbation(self.map, self.range, self.hdim)
+        self.op.set_perturbation(pesetting)
+        self.evolv = self.op.evolve
+    def setAbsorb(self):
         pass
-    def _evolve_perturb(self):
-        pass
-    def eigen_val(self):
-        pass
-        print self.range
-    def set_range(self, qmin, qmax, pmin, pmax, hdim):
+    def setRange(self, qmin, qmax, pmin, pmax, hdim):
+        self.ivec = None
         self.range = [(qmin, qmax), (pmin, pmax)]
         self.hdim = hdim
         self.h = (self.range[0][1] - self.range[0][0]) * (self.range[1][1] - self.range[1][0])/float(self.hdim)
@@ -188,7 +242,7 @@ class Qmap(PhaseSpace2d):
         self.p = numpy.arange(self.range[1][0], self.range[1][1], (self.range[1][1] - self.range[1][0])/self.hdim)
     def get_range(self):
         return self.range, self.hdim
-    def set_vrange(self, vqmin, vqmax, vpmin, vpmax, col, row):
+    def setVRange(self, vqmin, vqmax, vpmin, vpmax, col, row):
         self.vrange = [(vqmin, vqmax), (vpmin, vpmax)]
         self.grid = (col, row)
     def husimi_rep(self, target):
