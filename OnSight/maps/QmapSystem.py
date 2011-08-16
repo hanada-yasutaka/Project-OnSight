@@ -69,6 +69,7 @@ class Operator(PhaseSpace2d):
     def __init__(self, map, range, hdim):
         PhaseSpace2d.__init__(self, range, hdim)
         self.map = map
+        self.absetting = None
     def free_operator(self, isShift=True):
         if isShift:
             sp = numpy.fft.fftshift(self.p)
@@ -91,6 +92,31 @@ class Operator(PhaseSpace2d):
         vec1 = freeop * out_vec
         self.fvec = numpy.fft.ifft(vec1)
         return self.fvec
+    def evolve_open(self, in_vec):
+        if self.absetting == None: raise TypeError
+        freeop = self.free_operator(isShift=True)
+        kickop = self.kick_operator(isShift=False)
+        in_vec = self.absorb(self.q, self.absetting[0], in_vec)
+        vec1 = kickop * in_vec
+        out_vec = numpy.fft.fft(vec1)
+        out_vec = self.absorb(numpy.fft.fftshift(self.p), self.absetting[1], out_vec)
+        vec1 = freeop * out_vec
+        out_vec = numpy.fft.ifft(vec1)
+        self.fvec = self.absorb(self.q, self.absetting[0],out_vec)
+        return self.fvec
+    def absorb(self, x, absetting, vec):
+        i = 0
+        for setting in absetting:
+            if not setting: break
+            elif i != 0:
+                index1 = set(numpy.where(x > setting[0])[0])
+                index2 = set(numpy.where(x < setting[1])[0])
+                index = list(index1.intersection(index2))
+                vec[index] = 0.0
+            i += 1
+        return vec
+    def set_absorb(self, absetting):
+        self.absetting = absetting        
     def eigen_val(self):
         pass
         print self.range
@@ -117,19 +143,15 @@ class Perturbation(Operator):
             tfunc = self.map.ifunc1(sp)
             i=0
             for setting in self.setting[2]: 
-                if not setting:
-                    break
-                elif i != 0:
-                    tfunc = self.perturbation(sp, self.setting[0][1],setting[0], setting[1], tfunc)
+                if not setting: break
+                elif i != 0: tfunc = self.perturbation(sp, self.setting[0][1],setting[0], setting[1], tfunc)
                 i += 1
         else:
             trunc = self.map.ifunc1(self.p)
             i=0
             for setting in self.setting[2]:
-                if not setting:
-                    break
-                elif i != 0:
-                    tfunc = self.perturbation(self.p, self.setting[0][1],setting[0], setting[1], tfunc)
+                if not setting: break
+                elif i != 0: tfunc = self.perturbation(self.p, self.setting[0][1],setting[0], setting[1], tfunc)
                 i += 1
         return numpy.exp(-twopi*1.j*tfunc/self.h)
     def kick_operator(self, isShift=False):
@@ -138,19 +160,15 @@ class Perturbation(Operator):
             vfunc = self.map.ifunc0(sq)
             i = 0
             for setting in self.setting[1]:
-                if not setting:
-                    break
-                elif i != 0:
-                    vfunc = self.perturbation(sp, self.setting[0][1], setting[0], setting[1], vfunc)
+                if not setting: break
+                elif i != 0: vfunc = self.perturbation(sp, self.setting[0][1], setting[0], setting[1], vfunc)
                 i += 1
         else:
             vfunc = self.map.ifunc0(self.q)
             i=0
             for setting in self.setting[2]:
-                if not setting:
-                    break
-                elif i != 0:
-                    vfunc = self.perturbation(self.q, self.setting[0][1], setting[0], setting[1], vfunc)
+                if not setting: break
+                elif i != 0: vfunc = self.perturbation(self.q, self.setting[0][1], setting[0], setting[1], vfunc)
         return numpy.exp(-towpi*1.j*vfunc /self.h)
     def noise(self, x, eps, pcut_min, pcut_max, func):
         index1 = set(numpy.where(x > pcut_min)[0])
@@ -192,8 +210,8 @@ class Qmap(PhaseSpace2d):
                 if set[0]: self.range.append((0.0, set[1]))
                 else: self.range.append((0.0, 1.0))
         except: self.range = [(0.0, 1.0), (0.0, 1.0)]
-        try: self.Bsetting = map.Bsetting
-        except: self.Bsetting = None
+        try: self.ABsetting = map.Bsetting
+        except: self.ABsetting = [(False, []),(False,[])]
 
         self.map = map
         self.hdim = 100
@@ -216,7 +234,10 @@ class Qmap(PhaseSpace2d):
         elif state in ('qlt'): pass
         else: raise TypeError
         self.op = Operator(self.map, self.range, self.hdim)
-        self.evolv = self.op.evolve   
+        if self.ABsetting[0][0] or self.ABsetting[1][0]:
+            self.evolv = self.op.evolve_open
+        else:
+            self.evolv = self.op.evolve   
     def evolve(self, iter, dt=1, TimeLine=True):
         if self.ivec == None: raise ValueError
         invec = self.ivec
@@ -226,13 +247,18 @@ class Qmap(PhaseSpace2d):
             outvec = self.evolv(invec)
             invec = outvec
         self.fvec = outvec
-    def setPerturb(self):#, pesetting):
-        pesetting = [ ('noise', 1.0), (True, [0.2,0.3]), (True, [0.3, 0.5]) ]        
+    def setPerturb(self, PEsetting):#, pesetting):
+        self.PEsetting = [ ('noise', 1.0), (True, [0.2,0.3]), (True, [0.3, 0.5]) ]        
         self.op =  Perturbation(self.map, self.range, self.hdim)
         self.op.set_perturbation(pesetting)
+        if self.ABsettin[0][0] or self.Absetting[1][0]:
+            self.evolv = self.op.evolve_open
         self.evolv = self.op.evolve
-    def setAbsorb(self):
-        pass
+    def setAbsorb(self, absetting):
+        self.ABsetting = absetting
+        self.op = Operator(self.map, self.range, self.hdim)
+        self.op.set_absorb(self.ABsetting)
+        self.evolv = self.op.evolve_open
     def setRange(self, qmin, qmax, pmin, pmax, hdim):
         self.ivec = None
         self.range = [(qmin, qmax), (pmin, pmax)]
