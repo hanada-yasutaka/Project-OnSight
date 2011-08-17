@@ -20,11 +20,6 @@ class PhaseSpace2d(object):
                 'pmin' : self.range[1][0], 'pmax': self.range[1][1],
                 'h': self.h, 'hdim' : self.hdim }
         return info
-class Hole(PhaseSpace2d):
-    def __init__(self, asetting):
-        self.asetting = absetting
-        # example
-        bsetting = [ (True, [0.0,0.1], [0.2,0.3]), (False, []) ]
 
 class WaveFunction(PhaseSpace2d):
     def __init__(self, range, hdim):
@@ -38,8 +33,18 @@ class WaveFunction(PhaseSpace2d):
         index = numpy.where(qq == q_c)[0]
         self.vec[index] = 1.0
         return self.vec
-    def del_p(self, p_c):
-        pass
+    def del_p(self, p_in):
+        d = self.range[1][1] - self.range[1][0]
+        s = int(round(self.p.min()*self.hdim/d))
+        pp = numpy.arange(s, s+self.hdim, 1, dtype=int)
+        pp = numpy.fft.fftshift(pp)
+        p_c = int(round(p_in*self.hdim/d))
+        index = numpy.where(pp == p_c)[0]
+        test = numpy.fft.fftshift(self.p)
+        self.vec[index] = 1.0
+        vec = numpy.fft.ifft(self.vec)
+        vec = numpy.fft.fftshift(vec) 
+        return vec.real*numpy.sqrt(len(vec)) + 1.j*vec.imag*numpy.sqrt(len(vec)) 
     def cs_qvec(self, q_c, p_c):
         d = self.range[0][1] - self.range[0][0]
         long_q = numpy.linspace(self.range[0][0] - d, self.range[0][1] + d, 3.0 * self.hdim) 
@@ -64,8 +69,17 @@ class WaveFunction(PhaseSpace2d):
         res = numpy.exp(tmp)*numpy.sqrt(2.0 / self.h)
         return res
     def quantized_linear_tori(self, p_c, k, omega):
-        x = (twopi/self.h)*(-k/(4.0*twopi*twopi*sin(numpy.pi*omega))*sin(twopi*(x-omega/2.0))+p_c*x)
+        self.vec = (twopi/self.h)*(-k/(4.0*twopi*twopi*sin(numpy.pi*omega))*sin(twopi*(x-omega/2.0))+p_c*x)
         pass
+    def x2p(self, vec):
+        vec1 = numpy.fft.fft(vec)
+        vec2 = numpy.fft.fftshift(vec1)
+        return vec2.real/numpy.sqrt(len(vec2)) + 1.j*vec2.imag/numpy.sqrt(len(vec2))
+    def p2x(self, vec):
+        vec1 = numpy.fft.fftshift(vec)
+        vec2 = numpy.fft.ifft(vec1)
+        return vec2.real*numpy.sqrt(len(vec1)) + 1.j*vec2.imag*numpy.sqrt(len(vec2))
+
 class Operator(PhaseSpace2d):
     def __init__(self, map, range, hdim):
         PhaseSpace2d.__init__(self, range, hdim)
@@ -232,7 +246,7 @@ class Qmap(PhaseSpace2d):
     def setState(self, state, *args):
         self.wave = WaveFunction(self.range, self.hdim)
         if state in ('q'): self.ivec = self.wave.del_q(args[0])
-        elif state in ('p'): pass #self.wave.del_p(p_c)
+        elif state in ('p'):  self.ivec = self.wave.del_p(args[0])
         elif state in ('cs'): self.ivec = self.wave.cs_qvec(args[0], args[1])
         elif state in ('qlt'): pass
         else: raise TypeError
