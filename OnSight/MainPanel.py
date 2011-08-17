@@ -28,6 +28,7 @@ from RecurrenceTimePanel import RecurrenceTimePanel
 from SurvivalTimePanel import SurvivalTimePanel
 from HittingTimePanel import HittingTimePanel
 from MsetPanel import MsetPanel
+from QuantumPanel import QuantumPanel
 
 
 
@@ -36,7 +37,8 @@ panels={
 	'Recurrence Time':RecurrenceTimePanel,
 	'Survival Time':SurvivalTimePanel,
 	'Hitting Time':HittingTimePanel,
-	'M set':MsetPanel
+	'M set':MsetPanel,
+	'Quantum Map':QuantumPanel
 }
 
 class MainPanel(wx.Notebook):
