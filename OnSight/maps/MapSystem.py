@@ -478,15 +478,15 @@ class HarperMap(StandardMap):
 		StandardMap.__init__(self,k=k,isComplex=isComplex)
 		
 		self.Psetting=[(True,1.0),(True,1.0)]
-		
+	
 	def func1(self,x):
 		return self.func0(x)
 		
 	def dfunc1(self,x):
 		return self.dfunc0(x)
-		
+	
 	def ifunc1(self,x):
-		return self.ifunc1(x)
+		return self.ifunc0(x)
 		
 class PiecewiseLinearHarper(PiecewiseLinearStandard):
 	def __init__(self,k=1.0,isComplex=False):
