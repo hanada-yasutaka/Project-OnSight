@@ -43,12 +43,18 @@ class WaveFunction(PhaseSpace2d):
         p_c = int(round(p_in*self.hdim/d))
         
         p_index = numpy.arange(s, s+self.hdim, 1, dtype=int)
-        p_index = numpy.fft.fftshift(p_index)
+        index0 = numpy.where(p_index == 0)[0]
+
+        if len(index0) == 1 and 0 not in index0:
+            index = index0 - self.hdim/2
+            p_index = numpy.fft.fftshift(p_index)
+        else: index = 0
 
         index1 = numpy.where(p_index == p_c)[0]
         index2 = numpy.where(p_index == index1)[0]
-
-        self.vec[index2] = 1.0 
+        
+        shift_p = numpy.fft.fftshift(self.p)        
+        self.vec[index1-index] = 1.0
         vec = numpy.fft.ifft(self.vec)
         return vec.real*numpy.sqrt(len(vec)) + 1.j*vec.imag*numpy.sqrt(len(vec))
 
@@ -284,11 +290,14 @@ class QMap(PhaseSpace2d):
         if self.ABsetting[0][0] or self.ABsetting[1][0]:
             self.evolv = self.op.evolve_open
         else:
-            self.evolv = self.op.evolve   
+            self.evolv = self.op.evolve
+
     def evolve(self, iter):
         if self.ivec == None: raise ValueError
+        self.qvecs = []
+        self.pvecs = []
         invec = self.ivec
-        for i in range(iter):
+        for i in range(iter+1):
 #            if TimeLine and i%dt == 0:
             self.qvecs.append(invec)
             outvec = self.evolv(invec)
@@ -354,9 +363,10 @@ class QMap(PhaseSpace2d):
         ax.contourf(X,Y,hsm_data, hold='on', color='k')
         pylab.show()
     def get_pvecs(self):
-            for vec in self.xvec:
-                v = self.x2p(vec)
-                self.pvecs.append(v)
+        self.pvecs = []
+        for vec in self.qvecs:
+            v = self.x2p(vec)
+            self.pvecs.append(v)
     def x2p(self, vec):
         vec1 = numpy.fft.fft(vec)
         vec2 = numpy.fft.fftshift(vec1)
@@ -365,6 +375,13 @@ class QMap(PhaseSpace2d):
         vec1 = numpy.fft.fftshift(vec)
         vec2 = numpy.fft.ifft(vec1)
         return vec2.real*numpy.sqrt(len(vec1)) + 1.j*vec2.imag*numpy.sqrt(len(vec2))
+    def rounding_hsmdata(self, data, r):
+        z = numpy.array([])
+        for x in data:
+            z = numpy.append(z, [int(y*r)/float(r) for y in x])
+        return z.reshape(self.grid[0], self.grid[1])
+        
+        
 #    def getStatistic(self):
 #        if self.state in ('p','cs','qlt'):
 #            self.get_pvecs()
@@ -372,6 +389,5 @@ class QMap(PhaseSpace2d):
 #        else:
 #            self.statistic =Statistics(self.range, self.hdim, self.qvecs)
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     import qmap_test
