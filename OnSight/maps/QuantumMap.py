@@ -90,9 +90,12 @@ class WaveFunction(PhaseSpace2d):
             + 1.j *( - zz.imag/2.0 + numpy.sqrt(2.0)*q*z.imag)         
         res = numpy.exp(tmp)*numpy.sqrt(2.0 / self.h)
         return res
-    def quantized_linear_tori(self, p_c, k, omega):
-        self.vec = (twopi/self.h)*(-k/(4.0*twopi*twopi*sin(numpy.pi*omega))*sin(twopi*(x-omega/2.0))+p_c*x)
-        pass
+    def qlt_vec(self, p_c, k=2.0, omega=1.0):
+        exp_part = 1.j*(twopi/self.h)*(-k/(8.0*numpy.pi**2*numpy.sin(numpy.pi*omega))*numpy.sin(twopi*(self.q-omega/2.0))+p_c*self.q)
+        vec = numpy.exp(exp_part)
+        norm = numpy.sum(numpy.abs(vec)**2)
+        self.vec = vec.real/numpy.sqrt(norm) + 1.j*vec.imag/numpy.sqrt(norm)
+        return self.vec
 
 
 class Operator(PhaseSpace2d):
@@ -284,7 +287,7 @@ class QMap(PhaseSpace2d):
         if state in ('q'): self.ivec = self.wave.del_q(args[0])
         elif state in ('p'):  self.ivec = self.wave.del_p(args[0])
         elif state in ('cs'):  self.ivec = self.wave.cs_qvec(args[0], args[1])
-        elif state in ('qlt'): pass
+        elif state in ('qlt'): self.ivec = self.wave.qlt_vec(args[0],self.map.Para.para[0], self.map.Para.para[1])
         else: raise TypeError
         self.op = Operator(self.map, self.range, self.hdim)
         if self.ABsetting[0][0] or self.ABsetting[1][0]:
