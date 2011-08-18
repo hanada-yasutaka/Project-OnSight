@@ -501,7 +501,7 @@ class PiecewiseLinearHarper(PiecewiseLinearStandard):
 		return self.dfunc0(x)
 		
 	def ifunc1(self,x):
-		return self.ifunc1(x)
+		return self.ifunc0(x)
 		
 class SharpenHarper(SharpenStandard):
 	def __init__(self,k=1.0,e=0.5,isComplex=False):
@@ -516,7 +516,7 @@ class SharpenHarper(SharpenStandard):
 		return self.dfunc0(x)
 		
 	def ifunc1(self,x):
-		return self.ifunc1(x)
+		return self.ifunc0(x)
 
 '''general two-dimensional maps '''
 class BakerMap(Map):
