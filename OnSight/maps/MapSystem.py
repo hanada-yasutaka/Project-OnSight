@@ -390,7 +390,7 @@ class ShudoStandard(StandardMap):
 		return ( x*x*0.5*g/(1+g) + self.Para.para[2]*x )/twopi
 
 class HypTanStandard(StandardMap):
-	def __init__(self,k=2.0, s=4.173, beta=100.0, d=0.4, omega=0.6418,isComplex=False):
+	def __init__(self,k=2.0,omega=0.6418, s=4.173, beta=100.0, d=0.4,isComplex=False):
 		# to do
 		# When this map are called in onsight, raise Warning: overflow
 		# But func0 and func1 is not overflow...
@@ -398,14 +398,15 @@ class HypTanStandard(StandardMap):
 		self.Para=Parameter(5)
 		self.Para.para[0] = k
 		self.Para.range[0] = (0.0, None)
-		self.Para.para[1] = s
+		self.Para.para[1] = omega
 		self.Para.range[1] = (0.0, None)
-		self.Para.para[2] = beta
+		self.Para.para[2] = s
 		self.Para.range[2] = (0.0, None)
-		self.Para.para[3] = d
+		self.Para.para[3] = beta
 		self.Para.range[3] = (0.0, None)
-		self.Para.para[4] = omega
+		self.Para.para[4] = d
 		self.Para.range[4] = (0.0, None)
+
 		
 	def func0(self, x):
 		return -self.Para.para[0]*numpy.sin(x*twopi)/twopi
@@ -417,20 +418,20 @@ class HypTanStandard(StandardMap):
 		return self.Para.para[0]*numpy.cos(x*twopi)/twopi/twopi
 
 	def func1(self, x):
-		g = x - self.Para.para[3]
-		s = self.Para.para[1]
-		beta = self.Para.para[2]
-		return s/2*g*(1+numpy.tanh(beta*g)) + s*g*g*beta/4.0/(numpy.cosh(beta*g)**2) + self.Para.para[4]
+		g = x - self.Para.para[4]
+		s = self.Para.para[2]
+		beta = self.Para.para[3]
+		return s/2*g*(1+numpy.tanh(beta*g)) + s*g*g*beta/4.0/(numpy.cosh(beta*g)**2) + self.Para.para[1]
 	def ifunc1(self, x):
-		g = x - self.Para.para[3]
-		s = self.Para.para[1]
-		beta = self.Para.para[2]
-		return s/2*g*(1+numpy.tanh(beta*g)) + self.Para.para[4]*g
+		g = x - self.Para.para[4]
+		s = self.Para.para[2]
+		beta = self.Para.para[3]
+		return s/2*g*(1+numpy.tanh(beta*g)) + self.Para.para[1]*g
 
 	def dfunc1(self, x):
-		g = x - self.Para.para[3]
-		s = self.Para.para[1]
-		beta = self.Para.para[2]
+		g = x - self.Para.para[4]
+		s = self.Para.para[2]
+		beta = self.Para.para[3]
 		return s/2*(1+numpy.tanh(beta*g)) + s*x*beta/(numpy.cosh(beta*g)**2) - s/2*x*x*beta*numpy.sinh(beta*g)/(numpy.cosh(beta*g)**3) 
 	
 class KeplerMap(StandardMap):
