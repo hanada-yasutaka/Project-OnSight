@@ -288,7 +288,6 @@ class BranchSearch(object):
         diff = numpy.insert(diff, len(diff)-1, inf)
         return diff
     def adhoc_branch_pruning(self, branch_data):
-        import pylab
         diff1 = self.difference(branch_data[2].imag)
         diff_p= self.difference(branch_data[1][1].real)
         diff2 = self.difference(diff1)

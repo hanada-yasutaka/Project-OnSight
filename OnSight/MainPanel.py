@@ -29,6 +29,7 @@ from SurvivalTimePanel import SurvivalTimePanel
 from HittingTimePanel import HittingTimePanel
 from MsetPanel import MsetPanel
 from QuantumPanel import QuantumPanel
+from QmapEigenPanel import QmapEigenPanel
 
 
 
@@ -38,7 +39,8 @@ panels={
 	'Survival Time':SurvivalTimePanel,
 	'Hitting Time':HittingTimePanel,
 	'M set':MsetPanel,
-	'Quantum Map':QuantumPanel
+	'Quantum Map':QuantumPanel,
+	'Qmap Eigen':QmapEigenPanel
 }
 
 class MainPanel(wx.Notebook):

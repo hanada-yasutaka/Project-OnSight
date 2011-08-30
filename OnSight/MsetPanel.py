@@ -250,6 +250,7 @@ class MsetPanel(_SubPanel):
         self.branch_or_chain = 0
         self.GetMset()
         self.DrawMset()
+        self.test()
 
     def OnPress(self,xy):
         if 'Branch0' not in self.checklistlabel1:
@@ -423,6 +424,8 @@ class MsetPanel(_SubPanel):
         self.InitializationCheckList2()
         self.GetMset()
         self.DrawMset()
+        self.iteration = wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration').GetValue()
+        self.initial_p = float(wx.xrc.XRCCTRL(self.panel,'TextCtrlInitial_p').GetValue())
         wx.xrc.XRCCTRL(self.panel,'StaticTextPreference').SetLabel('Preference: iteration=%d, p_0 = %.2f' % (self.iteration,self.initial_p))
     def DeleteCheckedBranches(self):
         count = 0
@@ -466,11 +469,27 @@ class MsetPanel(_SubPanel):
             self.checklistbranch2.Append('Branch%3d' % i)
             wx.xrc.XRCCTRL(self.panel, 'ChoiceBranch').Append('Branch%d' % i)
 
+    def getSaveBranchLabel(self):
+        i = 0
+        paras = Utils.getParameterLabel(self.mapsystem)
+        para = ''
+        for name in paras:
+            para += name + '%.2f' % self.map.Para.para[i]
+            i += 1
+        para = para.replace('\\','')
+        return para
+        
     def SaveBranch(self):
         import os
         home = os.environ['HOME']
         name = self.mapsystem.MapName
-        datapath = home + '/.onsight/%s/Mset/data/p0_%.1f/step%d' % (self.mapsystem.MapName, self.initial_p, self.iteration)
+        map_label = self.getSaveBranchLabel()
+        pini_label = 'p_ini%.2f/' % (self.initial_p)
+        iter_lebel = 'step%d/' % (self.iteration) 
+        datapath = home + \
+             '/.onsight/%s/Mset/data/%sp_ini%.2f/step%d/'\
+                 % (self.mapsystem.MapName, map_label,self.initial_p, self.iteration)
+
         if os.path.exists(datapath) == False:
             os.makedirs(datapath)
         self.branchsearch.save_branch(self.load_branch_num, datapath)
@@ -478,10 +497,14 @@ class MsetPanel(_SubPanel):
         projpath = home + '/.onsight/%s/Mset/project' % (self.mapsystem.MapName)
         if os.path.exists(projpath) == False:
             os.makedirs(projpath)
-        name = 'iter%dp0_%.1f.mset' % (self.iteration, self.initial_p)
+            
+        name = '%sp_ini%.2fiter%d.mset' % (map_label,self.initial_p, self.iteration)
+        
         file = open("%s/%s" % (projpath, name), 'w')
         file.write('%d\n%.1f\n' % (self.iteration,self.initial_p))
         file.write('%s' % datapath)
+        for para in self.map.Para.para:
+            file.write('%f' % (para)) 
         file.close()
     def LoadBranch(self, proj):
         import glob
@@ -547,5 +570,14 @@ class MsetPanel(_SubPanel):
         self.wavepanel.plot(p, abs_swave)
         self.set_semiwave_range()
         self.wavepanel.draw()
-            
+    def test(self):
+        para = ''
+        i =0
+        paras = Utils.getParameterLabel(self.mapsystem)
+        for p in paras:
+            para += p + '%.2f' % self.map.Para.para[i]
+            i += 1
+        para = para.replace('\\','')
+        name = '%siter%dp_%.1f.mset' % (para,self.iteration, self.initial_p)
+        print name
 
