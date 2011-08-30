@@ -15,6 +15,7 @@ class PhaseSpace2d(object):
         self.h = (self.range[0][1] - self.range[0][0]) * (self.range[1][1] - self.range[1][0])/float(self.hdim)
         self.q = numpy.arange(self.range[0][0], self.range[0][1], (self.range[0][1] - self.range[0][0])/self.hdim)
         self.p = numpy.arange(self.range[1][0], self.range[1][1], (self.range[1][1] - self.range[1][0])/self.hdim)
+
     def get_scaleinfo(self):
         info = {'qmin' : self.range[0][0], 'qmax': self.range[0][1],
                 'pmin' : self.range[1][0], 'pmax': self.range[1][1],
@@ -25,6 +26,7 @@ class WaveFunction(PhaseSpace2d):
     def __init__(self, range, hdim):
         PhaseSpace2d.__init__(self, range, hdim)
         self.vec = numpy.zeros(self.hdim, dtype=numpy.complex128)
+
     def del_q(self, q_in):
         if q_in == self.range[0][1]:
             q_in = self.range[0][0]
@@ -35,6 +37,7 @@ class WaveFunction(PhaseSpace2d):
         index = numpy.where(qq == q_c)[0]
         self.vec[index] = 1.0
         return self.vec
+
     def del_p(self, p_in):
         if p_in == self.range[1][1]:
             p_in = self.range[1][0]
@@ -80,6 +83,7 @@ class WaveFunction(PhaseSpace2d):
         
 
         return self.vec
+
     def coherent_state_q(self, q_in, q_c, p_c):
         q = q_in/numpy.sqrt(self.h/towpi)
         z = q_c/numpy.sqrt(self.h/numpy.pi) + p_c*1.j/numpy.sqrt(self.h/numpy.pi)
@@ -90,53 +94,61 @@ class WaveFunction(PhaseSpace2d):
             + 1.j *( - zz.imag/2.0 + numpy.sqrt(2.0)*q*z.imag)         
         res = numpy.exp(tmp)*numpy.sqrt(2.0 / self.h)
         return res
+
     def qlt_vec(self, p_c, k=2.0, omega=1.0):
-        exp_part = 1.j*(twopi/self.h)*(-k/(8.0*numpy.pi**2*numpy.sin(numpy.pi*omega))*numpy.sin(twopi*(self.q-omega/2.0))+p_c*self.q)
+        exp_part = 1.j*(twopi/self.h)*(k/(8.0*numpy.pi**2*numpy.sin(numpy.pi*omega))*numpy.sin(twopi*(self.q-omega/2.0))+p_c*self.q)
         vec = numpy.exp(exp_part)
         norm = numpy.sum(numpy.abs(vec)**2)
         self.vec = vec.real/numpy.sqrt(norm) + 1.j*vec.imag/numpy.sqrt(norm)
         return self.vec
 
-
 class Operator(PhaseSpace2d):
+    # In this class method operates q representation wavefunction.
     def __init__(self, map, range, hdim):
         PhaseSpace2d.__init__(self, range, hdim)
         self.map = map
         self.absetting = None
-    def free_operator(self, isShift=True):
+        self.make_free_op()
+        self.make_kick_op()
+        
+    def make_free_op(self, isShift=True):
         if isShift:
             sp = numpy.fft.fftshift(self.p)
             tfunc = self.map.ifunc1(sp)
         else:
             tfunc = self.map.ifunc1(self.p)
-        return numpy.exp(-towpi*1.j* tfunc/self.h)
-    def kick_operator(self, isShift=False):
+        self.free_op = numpy.exp(-towpi*1.j* tfunc/self.h)
+
+    def make_kick_op(self, isShift=False):
         if isShift:
             sq = numpy.fft.fftshift(self.q)
             vfunc = self.map.ifunc0(sq)
         else:
             vfunc = self.map.ifunc0(self.q)
-        return numpy.exp(-towpi*1.j*vfunc /self.h)
-    def evolve(self, in_vec):
-        freeop = self.free_operator(isShift=True)
-        kickop = self.kick_operator(isShift=False)
-        vec1 = kickop * in_vec
+        self.kick_op = numpy.exp(-towpi*1.j*vfunc /self.h)
+    
+    def operate(self,in_vec):
+        vec1 = self.kick_op * in_vec
         out_vec = numpy.fft.fft(vec1)
-        vec1 = freeop * out_vec
-        self.fvec = numpy.fft.ifft(vec1)
+        vec1 = self.free_op * out_vec
+        out_vec = numpy.fft.ifft(vec1)
+        return out_vec
+    
+    def evolve(self, in_vec):
+        self.fvec = self.operate(in_vec)
         return self.fvec
+    
     def evolve_open(self, in_vec):
         if self.absetting == None: raise TypeError
-        freeop = self.free_operator(isShift=True)
-        kickop = self.kick_operator(isShift=False)
         in_vec = self.absorb(self.q, self.absetting[0], in_vec)
-        vec1 = kickop * in_vec
+        vec1 = self.kick_op * in_vec
         out_vec = numpy.fft.fft(vec1)
         out_vec = self.absorb(numpy.fft.fftshift(self.p), self.absetting[1], out_vec)
-        vec1 = freeop * out_vec
+        vec1 = self.free_op * out_vec
         out_vec = numpy.fft.ifft(vec1)
         self.fvec = self.absorb(self.q, self.absetting[0],out_vec)
         return self.fvec
+
     def absorb(self, x, absetting, vec):
         i = 0
         for setting in absetting:
@@ -148,28 +160,36 @@ class Operator(PhaseSpace2d):
                 vec[index] = 0.0
             i += 1
         return vec
+
     def set_absorb(self, absetting):
         self.absetting = absetting        
-    def eigen_val(self):
-        pass
-        print self.range
-class Representation(PhaseSpace2d):
-    def __init__(self, range, hdim):
-        PhaseSpace2d.__init__(self, range, hdim)
-        self.wave = WaveFunction(range, hdim)
-    def get_p_rep(self, vec):
-        return self.q, vec
-    def q_rep(self):
-        pass
+
+    def make_unitary(self, isOpen=False):
+        unitary = numpy.zeros((self.hdim, self.hdim),dtype=numpy.complex128)
+        for i in range(self.hdim):
+            ivec = numpy.zeros(self.hdim, dtype=numpy.complex128)
+            ivec[i] = 1.0 + 0.0j
+            out_vec = self.operate(ivec)
+            for j in range(self.hdim):
+                unitary[j][i] = out_vec[j]
+        return unitary
+
+    def get_eigen(self):
+        unitary = self.make_unitary()
+        (l,v) = numpy.linalg.eig(unitary)
+        return l,v.transpose()
+
 class Perturbation(Operator):
     def __init__(self, map, range, hdim):
         Operator.__init__(self, map, range, hdim)
+
     def set_perturbation(self, setting):
         list=['noise']
         if setting[0][0] not in list: raise TypeError
         if setting[0][0] == 'noise': self.perturbation = self.noise
         print self.perturbation
         self.setting = setting
+
     def free_operator(self, isShift=True):
         if isShift:
             sp = numpy.fft.fftshift(self.p)
@@ -187,6 +207,7 @@ class Perturbation(Operator):
                 elif i != 0: tfunc = self.perturbation(self.p, self.setting[0][1],setting[0], setting[1], tfunc)
                 i += 1
         return numpy.exp(-twopi*1.j*tfunc/self.h)
+
     def kick_operator(self, isShift=False):
         if isShift:
             sq = numpy.fft.fftshift(self.q)
@@ -203,21 +224,35 @@ class Perturbation(Operator):
                 if not setting: break
                 elif i != 0: vfunc = self.perturbation(self.q, self.setting[0][1], setting[0], setting[1], vfunc)
         return numpy.exp(-towpi*1.j*vfunc /self.h)
+
     def noise(self, x, eps, pcut_min, pcut_max, func):
         index1 = set(numpy.where(x > pcut_min)[0])
         index2 = set(numpy.where(x < pcut_max)[0])
         index = list(index1.intersection(index2))
         for i in index:
             func[i] = func[i] + eps*numpy.random.random()
-        return func    
+        return func  
 
+class Representation(PhaseSpace2d):
+    def __init__(self, range, hdim):
+        PhaseSpace2d.__init__(self, range, hdim)
+        self.wave = WaveFunction(range, hdim)
+
+    def get_p_rep(self, vec):
+        return self.q, vec
+
+    def q_rep(self):
+        pass
+  
 class PhaseSpaceRep(Representation):
     def __init__(self, range, hdim):
         Representation.__init__(self, range, hdim)
         self.wave = WaveFunction(range, hdim)
+
     def set_vrange(self, vrange, grid):
         self.vrange = vrange
         self.grid = grid
+
     def hsm_rep(self, terget):
         cs_dq = (self.vrange[0][1] - self.vrange[0][0]) / self.grid[0]
         cs_dp = (self.vrange[1][1] - self.vrange[1][0]) / self.grid[1]
@@ -230,6 +265,7 @@ class PhaseSpaceRep(Representation):
                 sum = numpy.sum(terget*numpy.conj(cs_vec)) 
                 hsm_img[i][j] = numpy.abs(sum) * numpy.abs(sum)
         return hsm_img
+
     def wigner_rep(self):
         pass
 
@@ -239,17 +275,22 @@ class Statistics(PhaseSpace2d):
         self.vecs = vecs
         self.get_survival()
         self.get_average()
+
     def get_survival(self):
         self.survival = []
         for vec in self.vecs:
             norm = numpy.sum(numpy.abs(self.vec)**2)
             self.surv.append(norm)
+
     def get_average(self):
         self.average = []
+
     def get_variance(self):
         self.variance = []
+
     def get_mean_sqdis(self,ini_c):
         self.mean_sqdis = []
+
     def get_loc_survival(self, range):
         self.loc_surv = []
     
@@ -276,10 +317,14 @@ class QMap(PhaseSpace2d):
         self.ivec = None
         self.fvec = None
         
+        self.evals = None
+        self.evecs = None
+        
         self.vrange = self.range
         self.grid = (50, 50)
         self.rep = PhaseSpaceRep(self.range, self.hdim)
         self.rep.set_vrange(self.range, (50,50))
+ 
     def setState(self, state, *args):
         self.wave = WaveFunction(self.range, self.hdim)
         self.state = state
@@ -306,6 +351,7 @@ class QMap(PhaseSpace2d):
             outvec = self.evolv(invec)
             invec = outvec
         self.fvec = outvec
+
     def setPerturb(self, PEsetting):#, pesetting):
         self.PEsetting = [ ('noise', 1.0), (True, [0.2,0.3]), (True, [0.3, 0.5]) ]        
         self.op =  Perturbation(self.map, self.range, self.hdim)
@@ -313,11 +359,13 @@ class QMap(PhaseSpace2d):
         if self.ABsettin[0][0] or self.Absetting[1][0]:
             self.evolv = self.op.evolve_open
         self.evolv = self.op.evolve
+
     def setAbsorb(self, absetting):
         self.ABsetting = absetting
         self.op = Operator(self.map, self.range, self.hdim)
         self.op.set_absorb(self.ABsetting)
         self.evolv = self.op.evolve_open
+
     def setRange(self, qmin, qmax, pmin, pmax, hdim):
         self.ivec = None
         self.range = [(qmin, qmax), (pmin, pmax)]
@@ -326,13 +374,16 @@ class QMap(PhaseSpace2d):
         self.q = numpy.arange(self.range[0][0], self.range[0][1], (self.range[0][1] - self.range[0][0])/self.hdim)
         self.p = numpy.arange(self.range[1][0], self.range[1][1], (self.range[1][1] - self.range[1][0])/self.hdim)
         self.setVRange(qmin, qmax, pmin, pmax, 50,50)
+
     def get_range(self):
         qmin, qmax = self.range[0][0], self.range[0][1]
         pmin, pmax = self.range[1][0], self.range[1][1]
         return qmin, qmax, pmin, pmax, self.hdim
+
     def setVRange(self, vqmin, vqmax, vpmin, vpmax, col, row):
         self.vrange = [(vqmin, vqmax), (vpmin, vpmax)]
         self.grid = (col, row)
+
     def get_vrange(self):
         qmin, qmax = self.vrange[0][0], self.vrange[0][1]
         pmin, pmax = self.vrange[1][0], self.vrange[1][1]
@@ -343,6 +394,7 @@ class QMap(PhaseSpace2d):
         self.rep = PhaseSpaceRep(self.range, self.hdim)
         self.rep.set_vrange(self.vrange, self.grid)
         return self.rep.hsm_rep(target)
+
     def husimi_rep(self, target):
         self.rep = PhaseSpaceRep(self.range, self.hdim)
         self.rep.set_vrange(self.vrange, self.grid)
@@ -365,24 +417,32 @@ class QMap(PhaseSpace2d):
         
         ax.contourf(X,Y,hsm_data, hold='on', color='k')
         pylab.show()
+
     def get_pvecs(self):
         self.pvecs = []
         for vec in self.qvecs:
             v = self.x2p(vec)
             self.pvecs.append(v)
+
     def x2p(self, vec):
         vec1 = numpy.fft.fft(vec)
         vec2 = numpy.fft.fftshift(vec1)
         return vec2.real/numpy.sqrt(len(vec2)) + 1.j*vec2.imag/numpy.sqrt(len(vec2))
+
     def p2x(self, vec):
         vec1 = numpy.fft.fftshift(vec)
         vec2 = numpy.fft.ifft(vec1)
         return vec2.real*numpy.sqrt(len(vec1)) + 1.j*vec2.imag*numpy.sqrt(len(vec2))
+
     def rounding_hsmdata(self, data, r):
         z = numpy.array([])
         for x in data:
             z = numpy.append(z, [int(y*r)/float(r) for y in x])
         return z.reshape(self.grid[0], self.grid[1])
+
+    def getEigen(self):
+        op = Operator(self.map, self.range, self.hdim)
+        (self.evals, self.evecs) = op.get_eigen()
         
         
 #    def getStatistic(self):
