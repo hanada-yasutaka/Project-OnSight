@@ -80,7 +80,7 @@ class HittingTimePanel(_SubPanel):
 			self.distplotpanel.plot(self.hittingtime.axis,self.hittingtime.dist,'-')
 			self.cumplotpanel.plot(self.hittingtime.axis,self.hittingtime.cum,'-')
 		def OnButtonSetStart(event):
-			dlg=Utils.RegionDialog(self,self.typeStart,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.OK|wx.CANCEL|wx.CENTER)
+			dlg=Utils.RegionDialog(self,self.typeStart,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.CENTER) 
 			
 			pages=self.GetParent().GetPages()
 			if pages.has_key('Poincare Plot'):
@@ -107,7 +107,7 @@ class HittingTimePanel(_SubPanel):
 			
 			dlg.Destroy()
 		def OnButtonSetEnd(event):
-			dlg=Utils.RegionDialog(self,self.typeEnd,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.OK|wx.CANCEL|wx.CENTER)
+			dlg=Utils.RegionDialog(self,self.typeEnd,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.CENTER)
 			
 			pages=self.GetParent().GetPages()
 			if pages.has_key('Poincare Plot'):
