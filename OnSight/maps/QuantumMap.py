@@ -108,8 +108,19 @@ class Operator(PhaseSpace2d):
         PhaseSpace2d.__init__(self, range, hdim)
         self.map = map
         self.absetting = None
-        self.make_free_op()
-        self.make_kick_op()
+        
+        self.make_kick_op(isShift=False)
+        
+        sign = [self.p[i]*self.p[i] for i in numpy.arange(self.hdim-1) ]
+        index = numpy.where(numpy.array(sign)<=0)[0]
+        
+        if len(index) == 0:
+            self.make_free_op(isShift=True)
+        elif len(index) == 1:
+            self.make_free_op(isShift=False)
+        else:
+            raise ValueError
+
         
     def make_free_op(self, isShift=True):
         if isShift:
