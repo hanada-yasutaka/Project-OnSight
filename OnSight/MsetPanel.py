@@ -432,7 +432,7 @@ class MsetPanel(_SubPanel):
         self.checkedindex1.sort()
         self.GetLset()
         self.GetAction()
-        print len(self.branchsearch.worm_start_point), len(self.branchsearch.lset), len(self.branchsearch.action)
+        #print len(self.branchsearch.worm_start_point), len(self.branchsearch.lset), len(self.branchsearch.action)
         for i in self.checkedindex1:
             self.branchsearch.worm_start_point.pop(i-count)
             self.branchsearch.lset.pop(i-count)
@@ -570,14 +570,5 @@ class MsetPanel(_SubPanel):
         self.wavepanel.plot(p, abs_swave)
         self.set_semiwave_range()
         self.wavepanel.draw()
-    def test(self):
-        para = ''
-        i =0
-        paras = Utils.getParameterLabel(self.mapsystem)
-        for p in paras:
-            para += p + '%.2f' % self.map.Para.para[i]
-            i += 1
-        para = para.replace('\\','')
-        name = '%siter%dp_%.1f.mset' % (para,self.iteration, self.initial_p)
-        print name
+    
 
