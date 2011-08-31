@@ -64,7 +64,7 @@ class SurvivalTimePanel(_SubPanel):
 			self.distplotpanel.plot(self.survivaltime.axis,self.survivaltime.dist,'-')
 			self.cumplotpanel.plot(self.survivaltime.axis,self.survivaltime.cum,'-')
 		def OnButtonSet(event):
-			dlg=Utils.RegionDialog(self,self.type,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.OK|wx.CANCEL|wx.CENTER)
+			dlg=Utils.RegionDialog(self,self.type,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.CENTER)
 			
 			pages=self.GetParent().GetPages()
 			if pages.has_key('Poincare Plot'):
