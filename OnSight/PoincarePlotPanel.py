@@ -76,8 +76,8 @@ class PoincarePlotPanel(_SubPanel):
 			wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration').SetValue(self.iteration)
 			OnButtonDraw(event)
 		def OnButtonSet(event):
-			dlg=Utils.RegionDialog(self,self.type,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.OK|wx.CANCEL|wx.CENTER)
-			
+			dlg=Utils.RegionDialog(self,self.type,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER| wx.CENTER)
+
 			for (args,kwargs) in self.plotpanel.data:
 				dlg.axes.plot(*args,**kwargs)
 			
@@ -100,7 +100,7 @@ class PoincarePlotPanel(_SubPanel):
 					self.TCListCircle[2][0].SetValue(str(values[2]))
 			
 			dlg.Destroy()
-			
+
 		self.Bind(wx.EVT_SPINCTRL, OnSpinCtrlSample, wx.xrc.XRCCTRL(self.panel,'SpinCtrlSample'))
 		self.Bind(wx.EVT_SPINCTRL, OnSpinCtrlIteration, wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration'))
 		self.Bind(wx.EVT_RADIOBOX, OnRadioBoxType, wx.xrc.XRCCTRL(self.panel,'RadioBoxType'))
