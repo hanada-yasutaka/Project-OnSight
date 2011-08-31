@@ -318,8 +318,6 @@ class QMap(PhaseSpace2d):
         try: self.ABsetting = map.Bsetting
         except: self.ABsetting = [(False, []),(False,[])]
         
-        print self.range, map.Psetting
-
         self.map = map
         self.hdim = 100
         PhaseSpace2d.__init__(self, self.range, self.hdim)
@@ -480,5 +478,3 @@ class QMap(PhaseSpace2d):
 #        else:
 #            self.statistic =Statistics(self.range, self.hdim, self.qvecs)
 
-if __name__ == "__main__":
-    import qmap_test
