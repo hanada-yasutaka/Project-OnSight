@@ -250,7 +250,7 @@ class MsetPanel(_SubPanel):
         self.branch_or_chain = 0
         self.GetMset()
         self.DrawMset()
-        self.test()
+
 
     def OnPress(self,xy):
         if 'Branch0' not in self.checklistlabel1:
