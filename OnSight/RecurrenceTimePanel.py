@@ -64,7 +64,7 @@ class RecurrenceTimePanel(_SubPanel):
 			self.distplotpanel.plot(self.recurrencetime.axis,self.recurrencetime.dist,'-')
 			self.cumplotpanel.plot(self.recurrencetime.axis,self.recurrencetime.cum,'-')
 		def OnButtonSet(event):
-			dlg=Utils.RegionDialog(self,self.type,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.OK|wx.CANCEL|wx.CENTER)
+			dlg=Utils.RegionDialog(self,self.type,style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.CENTER)
 			
 			pages=self.GetParent().GetPages()
 			if pages.has_key('Poincare Plot'):
