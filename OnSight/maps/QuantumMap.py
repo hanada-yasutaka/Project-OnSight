@@ -317,14 +317,18 @@ class QMap(PhaseSpace2d):
         except: self.range = [(0.0, 1.0), (0.0, 1.0)]
         try: self.ABsetting = map.Bsetting
         except: self.ABsetting = [(False, []),(False,[])]
+        
+        print self.range, map.Psetting
 
         self.map = map
         self.hdim = 100
         PhaseSpace2d.__init__(self, self.range, self.hdim)
         self.QMapName = map.__class__.__name__
         
-        self.qvecs = []
-        self.pvecs = []
+        #self.qvecs = []
+        #self.pvecs = []
+        self.qvecs = None
+        self.pvecs = None
         self.ivec = None
         self.fvec = None
         
@@ -431,14 +435,27 @@ class QMap(PhaseSpace2d):
 
     def get_pvecs(self):
         self.pvecs = []
-        for vec in self.qvecs:
+        if self.evecs != None:
+            vecs = self.evecs
+        elif self.qvecs != None:
+            vecs = self.qvecs
+        else: raise ValueError
+        
+        for vec in vecs:
             v = self.x2p(vec)
             self.pvecs.append(v)
 
     def x2p(self, vec):
+        
+        sign = [self.p[i]*self.p[i] for i in numpy.arange(self.hdim-1) ]
+        index = numpy.where(numpy.array(sign)<=0)[0]
+        
         vec1 = numpy.fft.fft(vec)
-        vec2 = numpy.fft.fftshift(vec1)
-        return vec2.real/numpy.sqrt(len(vec2)) + 1.j*vec2.imag/numpy.sqrt(len(vec2))
+        if index == 1:
+            vec1 = numpy.fft.fftshift(vec1)
+        elif index > 1:
+            raise ValueError
+        return vec1.real/numpy.sqrt(len(vec1)) + 1.j*vec1.imag/numpy.sqrt(len(vec1))
 
     def p2x(self, vec):
         vec1 = numpy.fft.fftshift(vec)
