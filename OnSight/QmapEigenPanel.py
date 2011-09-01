@@ -115,7 +115,8 @@ class QmapEigenPanel(_SubPanel):
         def OnButtonClear(event):
             self.cmap_data = []
             self.plotpanel.clear()
-            self.draw(self.state_num, self.rep)
+            try :self.draw(self.state_num, self.rep)
+            except: pass
                         
         self.Bind(wx.EVT_BUTTON, OnButtonGet, wx.xrc.XRCCTRL(self.panel, 'ButtonGet'))
         if wx.Platform != '__WXMAC__':
