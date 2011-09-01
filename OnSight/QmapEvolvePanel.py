@@ -6,12 +6,12 @@ import maps.MapSystem, maps.QuantumMap
 
 from MainPanel import _SubPanel
 
-class QuantumPanel(_SubPanel):
+class QmapEvolvePanel(_SubPanel):
     def __init__(self, parent, mapsystem, title):
         _SubPanel.__init__(self, parent, mapsystem, title)
 
-        xmlresource=wx.xrc.XmlResource("OnSight/data/xrc/quantumpanel.xrc")
-        self.panel=xmlresource.LoadPanel(self,"quantumpanel")
+        xmlresource=wx.xrc.XmlResource("OnSight/data/xrc/qmapevolvepanel.xrc")
+        self.panel=xmlresource.LoadPanel(self,"qmapevolvepanel")
 
         sizer=wx.BoxSizer()
         sizer.Add(self.panel,proportion=1,flag= wx.ALL | wx.EXPAND)
@@ -19,6 +19,8 @@ class QuantumPanel(_SubPanel):
         
         self.map = self.mapsystem.map
         self.qmap = maps.QuantumMap.QMap(self.map)
+        
+        self.Initialization()
         
         self.range = self.get_range()
         self.vrange = self.get_vrange()
@@ -33,9 +35,12 @@ class QuantumPanel(_SubPanel):
         self.vmin = 10**(-exp_part)
         self.draw = self.DrawHsm
         self.rep = 'hsm'
-        
-        def OnApply(event):
-            self.Initialization()
+
+        def OnClear(event):
+            self.cmap_data = []
+            self.plotpanel.clear()
+            try: self.draw(self.step, self.rep)
+            except :pass
 
         def OnRadioBoxInitial(event):
             radio = event.GetSelection()
@@ -66,11 +71,19 @@ class QuantumPanel(_SubPanel):
             else:
                 self.qmap.setState(self.state, self.ini_c[0],self.ini_c[1])
             self.DrawHsm(0, 'hsm')
+            wx.xrc.XRCCTRL(self.panel, 'ButtonIter').Enable(True)
+            wx.xrc.XRCCTRL(self.panel, 'ButtonDraw').Enable(False)
+            wx.xrc.XRCCTRL(self.panel, 'ButtonNext').Enable(False)
+            wx.xrc.XRCCTRL(self.panel, 'ButtonPrev').Enable(False)
 
         def OnSpinIteration(event):
             self.iteration = wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration').GetValue()
 
         def OnButtonIteration(event):
+            wx.xrc.XRCCTRL(self.panel, 'ButtonDraw').Enable(True)
+            wx.xrc.XRCCTRL(self.panel, 'ButtonNext').Enable(True)
+            self.step = 0
+            wx.xrc.XRCCTRL(self.panel, 'SpinCtrlDrawStep').SetValue(self.step)
             self.qmap.evolve(self.iteration)
             self.qmap.get_pvecs()
 
@@ -133,7 +146,7 @@ class QuantumPanel(_SubPanel):
 
 
 
-        self.Bind(wx.EVT_BUTTON, OnApply, wx.xrc.XRCCTRL(self.panel, 'ButtonApply'))
+        self.Bind(wx.EVT_BUTTON, OnClear, wx.xrc.XRCCTRL(self.panel, 'ButtonClear'))
         self.Bind(wx.EVT_RADIOBOX, OnRadioBoxInitial, wx.xrc.XRCCTRL(self.panel,'RadioBoxIniState'))
         self.Bind(wx.EVT_BUTTON, OnSetInitialState, wx.xrc.XRCCTRL(self.panel, 'ButtonSet'))  
         if wx.Platform != '__WXMAC__':
@@ -159,19 +172,20 @@ class QuantumPanel(_SubPanel):
         self.plotpanel.draw()
 
     def Initialization(self):
-        self.range = self.get_range()
-        self.vrange = self.get_vrange()
-        self.ini_c = self.get_initial()
-        self.rb_initial = 0
-        self.iteration = wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration').GetValue()
-        self.state = 'p'
-        self.step = wx.xrc.XRCCTRL(self.panel, 'SpinCtrlDrawStep').GetValue()
-        self.logplot = False
-        self.cmap_data = []
-        exp_part = int(wx.xrc.XRCCTRL(self.panel, 'TextCtrlLogMin').GetValue())
-        self.vmin = 10**(-exp_part)
-        self.draw = self.DrawHsm
-        self.rep = 'hsm'
+        range = self.qmap.get_range()
+        wx.xrc.XRCCTRL(self.panel, 'TextCtrlQmin').SetValue(str(range[0]))
+        wx.xrc.XRCCTRL(self.panel, 'TextCtrlQmax').SetValue(str(range[1]))
+        wx.xrc.XRCCTRL(self.panel, 'TextCtrlPmin').SetValue(str(range[2]))
+        wx.xrc.XRCCTRL(self.panel, 'TextCtrlPmax').SetValue(str(range[3]))
+        wx.xrc.XRCCTRL(self.panel, 'TextCtrlHdim').SetValue(str(range[4]))
+        vrange= self.qmap.get_vrange()
+        wx.xrc.XRCCTRL(self.panel, 'TextCtrlVQmin').SetValue(str(vrange[0]))
+        wx.xrc.XRCCTRL(self.panel, 'TextCtrlVQmax').SetValue(str(vrange[1]))
+        wx.xrc.XRCCTRL(self.panel, 'TextCtrlVPmin').SetValue(str(vrange[2]))
+        wx.xrc.XRCCTRL(self.panel, 'TextCtrlVPmax').SetValue(str(vrange[3]))
+        wx.xrc.XRCCTRL(self.panel, 'TextCtrlQgrid').SetValue(str(vrange[4]))
+        wx.xrc.XRCCTRL(self.panel, 'TextCtrlPgrid').SetValue(str(vrange[5]))    
+        
         
     def set_lim(self):
         range = self.get_vrange()

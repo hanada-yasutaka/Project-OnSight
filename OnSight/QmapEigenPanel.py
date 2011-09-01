@@ -10,8 +10,8 @@ class QmapEigenPanel(_SubPanel):
     def __init__(self, parent, mapsystem, title):
         _SubPanel.__init__(self, parent, mapsystem, title)
 
-        xmlresource=wx.xrc.XmlResource("OnSight/data/xrc/qmapeigen.xrc")
-        self.panel=xmlresource.LoadPanel(self,"qmapeigen")
+        xmlresource=wx.xrc.XmlResource("OnSight/data/xrc/qmapeigenpanel.xrc")
+        self.panel=xmlresource.LoadPanel(self,"qmapeigenpanel")
 
         sizer=wx.BoxSizer()
         sizer.Add(self.panel,proportion=1,flag= wx.ALL | wx.EXPAND)
