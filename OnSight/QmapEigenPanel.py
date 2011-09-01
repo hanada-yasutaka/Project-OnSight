@@ -41,14 +41,18 @@ class QmapEigenPanel(_SubPanel):
             self.qmap.setRange(range[0], range[1], range[2], range[3], range[4])
             self.qmap.getEigen()
             self.qmap.get_pvecs()
-            
+            try: self.evalplot.clear()
+            except :pass
+            self.rep = 'hsm'
+            self.DrawHsm(0, self.rep)
+            wx.xrc.XRCCTRL(self.panel, 'RadioBoxRep').SetSelection(0)
             wx.xrc.XRCCTRL(self.panel, 'SpinCtrlState').Enable(True)
             wx.xrc.XRCCTRL(self.panel, 'SpinCtrlState').SetRange(0,self.N-1)
             wx.xrc.XRCCTRL(self.panel, 'SpinCtrlState').SetValue(0)
             wx.xrc.XRCCTRL(self.panel, 'ButtonDraw').Enable(True)
             wx.xrc.XRCCTRL(self.panel, 'ButtonNext').Enable(True)
             wx.xrc.XRCCTRL(self.panel, 'ButtonEigenValueDraw').Enable(True)
-        
+            
         def OnSpinState(event):
             self.state_num = wx.xrc.XRCCTRL(self.panel, 'SpinCtrlState').GetValue()
             if self.state_num == self.N - 1:
@@ -149,7 +153,7 @@ class QmapEigenPanel(_SubPanel):
         wx.xrc.XRCCTRL(self.panel, 'TextCtrlpgrid').SetValue(str(vrange[5]))      
         
     def OnPress(self, xy):
-        iter = 200
+        iter = 500
         trajectory=True
         #self.mapsystem.Psetting = [(True,1.0), (False, 1.0)]
         self.mapsystem.setTrajectory(trajectory)
@@ -196,22 +200,23 @@ class QmapEigenPanel(_SubPanel):
         p = numpy.arange(pmin, pmax, (pmax - pmin)/hdim)
 
         
-        if self.logplot: self.plotpanel.ylim = (self.vmin, None)
-        else: self.plotpanel.ylim = (0, None)
+        if self.logplot: self.plotpanel.ylim = (self.vmin, 1)
+        #else: self.plotpanel.ylim = (0, None)
 
         if rep == 'q':
             self.plotpanel.xlim = (vrange[0], vrange[1])
-            self.plotpanel.setlim()
             data = self.qmap.evecs[num]
-            
+            if not self.logplot: self.plotpanel.ylim = (0, (numpy.abs(data)**2).max() )
+            self.plotpanel.setlim()
             self.plotpanel.plot(q, numpy.abs(data)**2,'-')
             
         elif rep == 'p':
             self.plotpanel.xlim = (vrange[2],vrange[3])
-            self.plotpanel.setlim()
             data = self.qmap.pvecs[num]
-            
+            if not self.logplot: self.plotpanel.ylim = (0, (numpy.abs(data)**2).max() )
+            self.plotpanel.setlim()
             self.plotpanel.plot(p, numpy.abs(data)**2,'-')
+            
         if self.logplot: self.plotpanel.axes.set_yscale('log')
         else : self.plotpanel.axes.set_yscale('linear')
         self.plotpanel.draw()
