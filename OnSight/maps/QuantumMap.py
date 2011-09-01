@@ -111,15 +111,28 @@ class Operator(PhaseSpace2d):
         
         self.make_kick_op(isShift=False)
         
-        sign = [self.p[i]*self.p[i] for i in numpy.arange(self.hdim-1) ]
-        index = numpy.where(numpy.array(sign)<=0)[0]
+        sign = [self.p[i]*self.p[i+1] for i in numpy.arange(self.hdim-1) ]
+        index = numpy.where(numpy.array(sign)<0)[0] #To check self.p crosses over 0
         
-        if len(index) == 0:
+        if len(index) != 0: 
+            #if self.p crosses over zero,  self.p is shifted and roll.
+            shift_roll = self.hdim/2 - index - 1
             self.make_free_op(isShift=True)
-        elif len(index) == 1:
-            self.make_free_op(isShift=False)
+            
         else:
-            raise ValueError
+            #if self.p does not cross over zero, self.p is only rolled.
+            if self.range[1][1] > 0:
+                label = numpy.arange( int(self.hdim*self.range[1][1]) )
+            elif self.range[1][0] < 0:
+                label = numpy.arange( int( self.hdim*self.range[1][0]), 0 )
+
+            else: raise ValueError
+            m = int(self.hdim*( self.range[1][1]  + self.range[1][0] )/2.0)
+            index1 = numpy.where(label == m)[0]
+            shift_roll = index1*2 - len(label) 
+            self.make_free_op(isShift=False)
+            
+        self.free_op = numpy.roll(self.free_op, shift_roll)
 
         
     def make_free_op(self, isShift=True):
@@ -444,18 +457,33 @@ class QMap(PhaseSpace2d):
             self.pvecs.append(v)
 
     def x2p(self, vec):
-        
-        sign = [self.p[i]*self.p[i] for i in numpy.arange(self.hdim-1) ]
-        index = numpy.where(numpy.array(sign)<=0)[0]
-        
         vec1 = numpy.fft.fft(vec)
-        if index == 1:
+        sign = [self.p[i]*self.p[i+1] for i in numpy.arange(self.hdim-1) ]
+        index = numpy.where(numpy.array(sign)<0)[0] #To check self.p crosses over 0
+        
+            
+
+        if len(index) != 0:
+            #if self.p crosses over zero,  self.p is shifted and roll.
+            shift_roll = self.hdim/2 + index + 1 
             vec1 = numpy.fft.fftshift(vec1)
-        elif index > 1:
-            raise ValueError
+        else:
+            #if self.p does not cross over zero, self.p is only rolled.
+            if self.range[1][1] > 0:
+                label = numpy.arange( int(self.hdim*self.range[1][1]) )
+            elif self.range[1][0] < 0:
+                label = numpy.arange( int( self.hdim*self.range[1][0]), 0 )
+
+            else: raise ValueError
+            m = int(self.hdim*( self.range[1][1]  + self.range[1][0] )/2.0)
+            index1 = numpy.where(label == m)[0]
+            shift_roll = index1*2 + len(label) 
+        
+        vec1 = numpy.roll(vec1,shift_roll)            
         return vec1.real/numpy.sqrt(len(vec1)) + 1.j*vec1.imag/numpy.sqrt(len(vec1))
 
     def p2x(self, vec):
+        # p2x method is not checked.
         vec1 = numpy.fft.fftshift(vec)
         vec2 = numpy.fft.ifft(vec1)
         return vec2.real*numpy.sqrt(len(vec1)) + 1.j*vec2.imag*numpy.sqrt(len(vec2))
