@@ -39,6 +39,8 @@ class WaveFunction(PhaseSpace2d):
         return self.vec
 
     def del_p(self, p_in):
+        # to do bug fix
+        
         if p_in == self.range[1][1]:
             p_in = self.range[1][0]
         d = self.range[1][1] - self.range[1][0]
@@ -51,14 +53,26 @@ class WaveFunction(PhaseSpace2d):
         if len(index0) == 1 and 0 not in index0:
             index = index0 - self.hdim/2
             p_index = numpy.fft.fftshift(p_index)
-        else: index = 0
+            shift_roll = 0
+        else:
+            index = 0
+            if self.range[1][1] > 0:
+                label = numpy.arange( int(self.hdim*self.range[1][1]) )
+            elif self.range[1][0] < 0:
+                label = numpy.arange( int( self.hdim*self.range[1][0]), 0 )
+            else: raise ValueError
+            m = int(self.hdim*( self.range[1][1]  + self.range[1][0] )/2.0)
+            indexshift = numpy.where(label == m)[0]
+            shift_roll = indexshift*2 - len(label)     
 
         index1 = numpy.where(p_index == p_c)[0]
         index2 = numpy.where(p_index == index1)[0]
         
-        shift_p = numpy.fft.fftshift(self.p)        
+        shift_p = numpy.fft.fftshift(self.p)
         self.vec[index1-index] = 1.0
-        vec = numpy.fft.ifft(self.vec)
+        vec = numpy.roll(self.vec, shift_roll)         
+        vec = numpy.fft.ifft(vec)
+        
         return vec.real*numpy.sqrt(len(vec)) + 1.j*vec.imag*numpy.sqrt(len(vec))
 
     def cs_qvec(self, q_c, p_c):
