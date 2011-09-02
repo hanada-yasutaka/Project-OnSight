@@ -180,12 +180,16 @@ class QmapEigenPanel(_SubPanel):
         return (qmin, qmax, pmin, pmax, hdim)
     
     def get_vrange(self):
+        range = self.get_range()
         vqmin = float(wx.xrc.XRCCTRL(self.panel, "TextCtrlvqmin").GetValue())
         vqmax = float(wx.xrc.XRCCTRL(self.panel, "TextCtrlvqmax").GetValue())
         vpmin = float(wx.xrc.XRCCTRL(self.panel, "TextCtrlvpmin").GetValue())
         vpmax = float(wx.xrc.XRCCTRL(self.panel, "TextCtrlvpmax").GetValue())
         col = int(wx.xrc.XRCCTRL(self.panel, "TextCtrlqgrid").GetValue())
         row = int(wx.xrc.XRCCTRL(self.panel, "TextCtrlpgrid").GetValue())
+        if vqmin < range[0] or vqmax > range[1] or \
+            vpmin < range[2] or vpmax > range[3]:
+            raise ValueError
         return (vqmin, vqmax, vpmin, vpmax,col, row)
     
     def Draw(self, num, rep):

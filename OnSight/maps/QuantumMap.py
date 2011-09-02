@@ -39,38 +39,40 @@ class WaveFunction(PhaseSpace2d):
         return self.vec
 
     def del_p(self, p_in):
-        # to do bug fix
         
         if p_in == self.range[1][1]:
             p_in = self.range[1][0]
-        d = self.range[1][1] - self.range[1][0]
-        s = int(round(self.p.min()*self.hdim/d))
-        p_c = int(round(p_in*self.hdim/d))
-        
-        p_index = numpy.arange(s, s+self.hdim, 1, dtype=int)
-        index0 = numpy.where(p_index == 0)[0]
 
-        if len(index0) == 1 and 0 not in index0:
-            index = index0 - self.hdim/2
-            p_index = numpy.fft.fftshift(p_index)
-            shift_roll = 0
+        m = (self.range[1][1] - self.range[1][0])/2.0
+        min = int(self.range[1][0]*self.hdim)
+        max = int(self.range[1][1]*self.hdim)
+        p_c = int(p_in*self.hdim)
+        p = numpy.arange(min, max)
+
+        pindex = numpy.where(p==p_c)[0]
+        pindex = int(pindex*(self.hdim)/float(max-min))
+
+        sign = [self.p[i]*self.p[i+1] for i in numpy.arange(self.hdim-1) ]
+        index1 = numpy.where(numpy.array(sign)<0)[0] #To check self.p crosses over 0
+
+        if len(index1) != 0:
+            shift_roll = self.hdim/2 - index1 - 1 
+            self.vec[pindex] = 1.0
+            self.vec = numpy.fft.fftshift(self.vec)
         else:
-            index = 0
+            #if self.p does not cross over zero, self.p is only rolled.
+            m = int(self.hdim*( self.range[1][1]  + self.range[1][0] )/2.0)
             if self.range[1][1] > 0:
                 label = numpy.arange( int(self.hdim*self.range[1][1]) )
+                index1 = numpy.where(label == m)[0]
+                shift_roll = int(index1*(self.hdim/float(max-min))) - self.hdim/2  - 1
             elif self.range[1][0] < 0:
                 label = numpy.arange( int( self.hdim*self.range[1][0]), 0 )
-            else: raise ValueError
-            m = int(self.hdim*( self.range[1][1]  + self.range[1][0] )/2.0)
-            indexshift = numpy.where(label == m)[0]
-            shift_roll = indexshift*2 - len(label)     
+                index1 = numpy.where(label[::-1] == m)[0]    
+                shift_roll = -int(index1*(self.hdim/float(max-min))) + self.hdim/2  - 1
+            self.vec[pindex] = 1.0
 
-        index1 = numpy.where(p_index == p_c)[0]
-        index2 = numpy.where(p_index == index1)[0]
-        
-        shift_p = numpy.fft.fftshift(self.p)
-        self.vec[index1-index] = 1.0
-        vec = numpy.roll(self.vec, shift_roll)         
+        vec = numpy.roll(self.vec, shift_roll )                    
         vec = numpy.fft.ifft(vec)
         
         return vec.real*numpy.sqrt(len(vec)) + 1.j*vec.imag*numpy.sqrt(len(vec))

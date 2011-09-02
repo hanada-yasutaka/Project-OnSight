@@ -22,12 +22,12 @@ class QmapEvolvePanel(_SubPanel):
         
         self.Initialization()
         
+        self.state = 'p'
         self.range = self.get_range()
         self.vrange = self.get_vrange()
         self.ini_c = self.get_initial()
         self.rb_initial = 0
         self.iteration = wx.xrc.XRCCTRL(self.panel,'SpinCtrlIteration').GetValue()
-        self.state = 'p'
         self.step = wx.xrc.XRCCTRL(self.panel, 'SpinCtrlDrawStep').GetValue()
         self.logplot = False
         self.cmap_data = []
@@ -35,6 +35,7 @@ class QmapEvolvePanel(_SubPanel):
         self.vmin = 10**(-exp_part)
         self.draw = self.DrawHsm
         self.rep = 'hsm'
+        
 
         def OnClear(event):
             self.cmap_data = []
@@ -65,10 +66,17 @@ class QmapEvolvePanel(_SubPanel):
             self.qmap.setRange(self.range[0], self.range[1], self.range[2],self.range[3], self.range[4])
             
             if self.state in ('p','plt'):
+                if self.ini_c[1] < self.range[2] or self.ini_c[1] > self.range[3]:
+                    raise ValueError
                 self.qmap.setState(self.state,self.ini_c[1])
             elif self.state in ('q'):
+                if self.ini_c[0] < self.range[0] or self.ini_c[0] > self.range[1]:
+                    raise ValueError
                 self.qmap.setState(self.state, self.ini_c[0])
             else:
+                if self.ini_c[1] < self.range[2] or self.ini_c[1] > self.range[3] or\
+                     self.ini_c[0] < self.range[0] or self.ini_c[0] > self.range[1]:
+                    raise ValueError
                 self.qmap.setState(self.state, self.ini_c[0],self.ini_c[1])
             self.DrawHsm(0, 'hsm')
             wx.xrc.XRCCTRL(self.panel, 'ButtonIter').Enable(True)
@@ -214,17 +222,36 @@ class QmapEvolvePanel(_SubPanel):
         return (qmin, qmax, pmin, pmax, hdim)
     
     def get_vrange(self):
+        range = self.get_range()
         vqmin = float(wx.xrc.XRCCTRL(self.panel, "TextCtrlVQmin").GetValue())
         vqmax = float(wx.xrc.XRCCTRL(self.panel, "TextCtrlVQmax").GetValue())
         vpmin = float(wx.xrc.XRCCTRL(self.panel, "TextCtrlVPmin").GetValue())
         vpmax = float(wx.xrc.XRCCTRL(self.panel, "TextCtrlVPmax").GetValue())
         col = int(wx.xrc.XRCCTRL(self.panel, "TextCtrlQgrid").GetValue())
         row = int(wx.xrc.XRCCTRL(self.panel, "TextCtrlPgrid").GetValue())
+        if vqmin < range[0] or vqmax > range[1] or \
+            vpmin < range[2] or vpmax > range[3]:
+            raise ValueError
         return (vqmin, vqmax, vpmin, vpmax,col, row)
     
     def get_initial(self):
-        q_c = float(wx.xrc.XRCCTRL(self.panel, "TextCtrlq_c").GetValue())
-        p_c = float(wx.xrc.XRCCTRL(self.panel, "TextCtrlp_c").GetValue())
+        value1 = wx.xrc.XRCCTRL(self.panel, "TextCtrlq_c").GetValue()
+        value2 = wx.xrc.XRCCTRL(self.panel, "TextCtrlp_c").GetValue()
+        try:
+            q_c = float(value1)
+            p_c = float(value2)
+        except:
+            if self.state == 'cs':
+                raise ValueError
+            elif value1 == '' and self.state != 'q':
+                q_c = 0.0
+                p_c = float(value2)
+                wx.xrc.XRCCTRL(self.panel, "TextCtrlq_c").SetValue(str(q_c))
+            elif value2 == '' and (self.state != 'p' or self.state != 'plt'):
+                p_c=0.0
+                q_c = float(value1)
+                wx.xrc.XRCCTRL(self.panel, "TextCtrlp_c").SetValue(str(p_c))
+
         return (q_c, p_c)
 
     def DrawHsm(self, iter, rep='hsm'):
